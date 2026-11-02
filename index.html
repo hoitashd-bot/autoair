@@ -1,0 +1,1127 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>AutoAir</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="description" content="AutoAir is developing a built-in electric tire pump concept for electric vehicles, designed to keep tire pressure at its target level automatically.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Michroma&family=Sora:wght@300;400;600;700&family=Manrope:wght@400;500;600;700&display=swap">
+<style>
+/* Layout concept: alternating "garage" (deep black, electric light) and "studio" (white, light gray) bands,
+   like a premium EV configurator. Blue is reserved for live system signals: pressure, airflow, actions. */
+:root {
+  --blue: #1677FF;
+  --blue-2: #48B4FF;
+  --black: #080B10;
+  --graphite: #171B22;
+  --white: #FFFFFF;
+  --mist: #E8ECF1;
+  --steel: #8B95A5;
+  --ink: #0E1218;
+  --line-d: rgba(255,255,255,.09);
+  --line-l: rgba(8,11,16,.10);
+  --text-d: #C9D1DC;
+  --text-l: #4A5361;
+  --f-display: 'Sora', 'Helvetica Neue', Arial, sans-serif;
+  --f-body: 'Manrope', 'Helvetica Neue', Arial, sans-serif;
+  --f-mark: 'Michroma', 'Eurostile', 'Helvetica Neue', Arial, sans-serif;
+  --gl: max(16px, env(safe-area-inset-left, 0px));
+  --gr: max(16px, env(safe-area-inset-right, 0px));
+  --radius: 14px;
+  color-scheme: dark;
+}
+html { scroll-behavior: smooth; scroll-padding-top: 76px; }
+body { background: var(--black); color: var(--white); font-family: var(--f-body); font-size: 16px; line-height: 1.6; -webkit-font-smoothing: antialiased; }
+* { box-sizing: border-box; }
+h1, h2, h3, h4 { font-family: var(--f-display); margin: 0; text-wrap: balance; letter-spacing: -0.025em; }
+p { margin: 0; }
+a { color: inherit; }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--blue-2); outline-offset: 3px; border-radius: 6px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 60; background: var(--black); }
+
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: var(--gl); padding-right: var(--gr); }
+.band { padding-block: clamp(72px, 10vw, 128px); position: relative; overflow: hidden; }
+.band.dark { background: var(--black); color: var(--white); }
+.band.graphite { background: var(--graphite); color: var(--white); }
+.band.light { background: var(--white); color: var(--ink); color-scheme: light; }
+.band.mist { background: var(--mist); color: var(--ink); color-scheme: light; }
+.eyebrow { font-family: var(--f-mark); font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--blue); display: inline-flex; align-items: center; gap: 10px; }
+.eyebrow::before { content: ""; width: 22px; height: 1px; background: currentColor; }
+.dark .eyebrow, .graphite .eyebrow { color: var(--blue-2); }
+.h2 { font-size: clamp(34px, 5.2vw, 60px); font-weight: 600; line-height: 1.04; margin-top: 18px; }
+.lead { font-size: clamp(17px, 1.6vw, 19px); max-width: 60ch; margin-top: 20px; }
+.dark .lead, .graphite .lead { color: var(--text-d); }
+.light .lead, .mist .lead { color: var(--text-l); }
+.note { font-size: 13px; line-height: 1.5; display: flex; gap: 8px; align-items: flex-start; }
+.dark .note, .graphite .note { color: var(--steel); }
+.light .note, .mist .note { color: #5E6876; }
+.note svg { flex: none; margin-top: 2px; }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; padding: 14px 26px; border-radius: 999px; font-family: var(--f-display); font-weight: 600; font-size: 15px; letter-spacing: .01em; text-decoration: none; cursor: pointer; border: 1px solid transparent; transition: transform .2s ease, background .2s, box-shadow .25s, border-color .2s, color .2s; }
+.btn:active { transform: translateY(1px); }
+.btn-primary { background: var(--blue); color: var(--white); box-shadow: 0 8px 30px rgba(22,119,255,.35); }
+.btn-primary:hover { background: #2a86ff; box-shadow: 0 10px 40px rgba(22,119,255,.55); }
+.btn-ghost { background: transparent; color: var(--white); border-color: rgba(255,255,255,.28); }
+.btn-ghost:hover { border-color: var(--blue-2); color: var(--blue-2); }
+.light .btn-ghost, .mist .btn-ghost { color: var(--ink); border-color: rgba(8,11,16,.2); }
+.btn svg { width: 16px; height: 16px; }
+
+/* ---------- Navigation ---------- */
+.nav { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 50; transition: background .3s, border-color .3s, backdrop-filter .3s; border-bottom: 1px solid transparent; }
+.nav.solid { background: rgba(8,11,16,.82); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom-color: var(--line-d); }
+.nav-in { display: flex; align-items: center; gap: 28px; height: 80px; }
+.logo { display: inline-flex; align-items: center; gap: 10px; text-decoration: none; color: var(--white); }
+.logo-img { height: 60px; width: auto; display: block; filter: drop-shadow(0 0 1px rgba(255,255,255,.25)) drop-shadow(0 4px 14px rgba(22,119,255,.25)); transition: filter .3s; }
+.logo:hover .logo-img { filter: drop-shadow(0 0 1px rgba(255,255,255,.35)) drop-shadow(0 4px 18px rgba(72,180,255,.45)); }
+.logo-foot { height: 78px; }
+.brand { display: block; width: auto; max-width: 100%; }
+.brand-hero { height: clamp(78px, 9vw, 120px); margin: 0 0 26px -6px; filter: drop-shadow(0 0 1px rgba(255,255,255,.3)) drop-shadow(0 10px 30px rgba(22,119,255,.35)); }
+.gauge-top { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.brand-gauge { height: 40px; filter: drop-shadow(0 0 1px rgba(255,255,255,.3)); opacity: .95; }
+.brand-about { height: clamp(90px, 11vw, 140px); margin-top: 36px; }
+.brand-cta { height: clamp(100px, 14vw, 170px); margin: 0 auto 26px; filter: drop-shadow(0 0 1px rgba(255,255,255,.35)) drop-shadow(0 0 40px rgba(22,119,255,.55)); animation: float 6s ease-in-out infinite; }
+@keyframes float { 50% { transform: translateY(-6px); } }
+.brand-modal { height: 58px; margin: 0 0 16px -4px; filter: drop-shadow(0 0 1px rgba(255,255,255,.3)); }
+.nav-links { display: flex; gap: 26px; margin-left: auto; list-style: none; padding: 0; margin-block: 0; }
+.nav-links a { text-decoration: none; font-size: 14.5px; font-weight: 500; color: var(--text-d); transition: color .2s; }
+.nav-links a:hover, .nav-links a.on { color: var(--white); }
+.nav .btn { padding: 10px 18px; font-size: 14px; }
+.menu-btn { display: none; margin-left: auto; width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line-d); background: transparent; color: var(--white); cursor: pointer; }
+.menu-btn svg { width: 20px; height: 20px; }
+
+/* ---------- Hero ---------- */
+.hero { position: relative; background: radial-gradient(ellipse 70% 60% at 72% 46%, rgba(22,119,255,.20), transparent 62%), radial-gradient(ellipse 50% 40% at 70% 92%, rgba(72,180,255,.10), transparent 70%), var(--black); overflow: hidden; margin-top: -72px; padding-top: 72px; }
+.hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); gap: 32px; align-items: center; padding-block: clamp(48px, 7vw, 96px) clamp(56px, 7vw, 96px); }
+.hero h1 { font-size: clamp(44px, 6.6vw, 86px); font-weight: 600; line-height: .98; letter-spacing: -0.04em; margin-top: 22px; }
+.hero h1 em { font-style: normal; color: var(--blue-2); display: block; }
+.hero .lead { color: var(--text-d); max-width: 52ch; }
+.hero-cta { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 34px; }
+.hero-floor { position: absolute; inset: auto 0 0 0; height: 30%; background: repeating-linear-gradient(90deg, rgba(72,180,255,.06) 0 1px, transparent 1px 80px); mask-image: linear-gradient(to top, #000, transparent); -webkit-mask-image: linear-gradient(to top, #000, transparent); pointer-events: none; }
+.wheel-stage { position: relative; aspect-ratio: 1 / 1; max-width: 640px; width: 100%; justify-self: center; }
+.wheel-stage > svg { width: 100%; height: 100%; display: block; overflow: visible; }
+.spin { transform-origin: 300px 300px; animation: spin 26s linear infinite; }
+.scan { transform-origin: 300px 300px; animation: spin 6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.hud { position: absolute; left: -6%; bottom: -4%; width: min(310px, 66%); background: rgba(14,18,24,.78); border: 1px solid rgba(72,180,255,.28); border-radius: var(--radius); padding: 16px 18px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+.hud-row { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--line-d); }
+.hud-row:last-of-type { border-bottom: 0; }
+.hud-k { font-family: var(--f-mark); font-size: 9.5px; letter-spacing: .16em; color: var(--steel); }
+.hud-v { font-family: var(--f-display); font-weight: 600; font-size: 17px; font-variant-numeric: tabular-nums; }
+.hud-v.ok { white-space: nowrap; color: var(--blue-2); font-size: 11.5px; font-family: var(--f-mark); letter-spacing: .1em; display: inline-flex; align-items: center; gap: 7px; }
+.hud-v.ok i { width: 8px; height: 8px; border-radius: 50%; background: var(--blue-2); box-shadow: 0 0 10px var(--blue-2); animation: pulse 1.8s ease-in-out infinite; }
+@keyframes pulse { 50% { opacity: .35; } }
+.hud-bar { height: 4px; border-radius: 4px; background: rgba(255,255,255,.08); margin-top: 6px; overflow: hidden; }
+.hud-bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--blue), var(--blue-2)); transition: width .4s; }
+.hud-foot { margin-top: 10px; font-size: 11px; color: var(--steel); line-height: 1.4; }
+.hero-strip { border-top: 1px solid var(--line-d); }
+.hero-strip .wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.hero-strip div.s { padding: 22px 0; display: flex; gap: 14px; align-items: center; color: var(--text-d); font-size: 14.5px; }
+.hero-strip div.s + div.s { padding-left: 24px; border-left: 1px solid var(--line-d); }
+.hero-strip b { color: var(--white); font-family: var(--f-display); font-weight: 600; display: block; font-size: 15px; }
+.hero-strip svg { width: 26px; height: 26px; flex: none; color: var(--blue-2); }
+
+/* ---------- Product explanation ---------- */
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 80px); align-items: center; }
+.product-art { background: radial-gradient(circle at 50% 45%, #ffffff 0%, var(--mist) 70%); border-radius: 28px; aspect-ratio: 1 / 1; max-width: 100%; display: grid; place-items: center; position: relative; overflow: hidden; border: 1px solid var(--line-l); }
+.product-art svg { width: 88%; height: auto; }
+.product-art .tag { position: absolute; left: 20px; bottom: 18px; font-family: var(--f-mark); font-size: 9.5px; letter-spacing: .18em; color: #6A7482; }
+.steps3 { display: grid; gap: 0; margin-top: 36px; border-top: 1px solid var(--line-l); }
+.step3 { display: grid; grid-template-columns: 64px 1fr; gap: 16px; padding: 22px 0; border-bottom: 1px solid var(--line-l); }
+.step3 .n { font-family: var(--f-mark); font-size: 13px; color: var(--blue); padding-top: 4px; letter-spacing: .1em; }
+.step3 h3 { font-size: 20px; font-weight: 600; }
+.step3 p { color: var(--text-l); margin-top: 6px; font-size: 15.5px; }
+
+/* ---------- How it works ---------- */
+.how { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); gap: clamp(32px, 5vw, 72px); margin-top: 56px; }
+.how-visual { position: sticky; top: 96px; align-self: start; background: radial-gradient(circle at 50% 50%, rgba(22,119,255,.10), transparent 65%), #0B0F15; border: 1px solid var(--line-d); border-radius: 24px; padding: 18px; }
+.how-visual svg { width: 100%; height: auto; display: block; }
+.how-visual .cap { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 4px 6px 0; font-family: var(--f-mark); font-size: 9.5px; letter-spacing: .16em; color: var(--steel); }
+.how-steps { display: grid; gap: 0; }
+.hstep { min-height: 52vh; display: flex; flex-direction: column; justify-content: center; gap: 12px; padding: 24px 0 24px 28px; border-left: 1px solid var(--line-d); position: relative; transition: opacity .4s; opacity: .38; }
+.hstep.on { opacity: 1; }
+.hstep::before { content: ""; position: absolute; left: -5px; top: 50%; width: 9px; height: 9px; border-radius: 50%; background: #2A3240; transition: background .3s, box-shadow .3s; }
+.hstep.on::before { background: var(--blue-2); box-shadow: 0 0 14px var(--blue-2); }
+.hstep .k { font-family: var(--f-mark); font-size: 11px; letter-spacing: .18em; color: var(--blue-2); }
+.hstep h3 { font-size: clamp(22px, 2.4vw, 28px); font-weight: 600; }
+.hstep p { color: var(--text-d); max-width: 46ch; }
+.cut .part { transition: opacity .45s, filter .45s; opacity: .28; }
+.cut[data-step="1"] .s1, .cut[data-step="2"] .s2, .cut[data-step="3"] .s3, .cut[data-step="4"] .s4, .cut[data-step="5"] .s5 { opacity: 1; filter: drop-shadow(0 0 6px rgba(72,180,255,.8)); }
+.cut[data-step="5"] .s4 { opacity: .55; filter: none; }
+.cut .flow { stroke-dasharray: 6 8; animation: dash 1s linear infinite; }
+@keyframes dash { to { stroke-dashoffset: -28; } }
+.cut .lbl { font-family: var(--f-mark); font-size: 10.5px; letter-spacing: .1em; fill: #DCE6F2; }
+.cut .lbl-s { font-family: var(--f-body); font-size: 11px; fill: #8B95A5; }
+.cut .chamber { transition: fill-opacity .6s; }
+.cut[data-step="5"] .chamber { fill-opacity: .38; }
+
+/* ---------- Benefits ---------- */
+.cards4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin-top: 52px; }
+.fcard { background: var(--white); border: 1px solid var(--line-l); border-radius: var(--radius); padding: 28px 24px; display: grid; gap: 14px; align-content: start; transition: transform .3s ease, box-shadow .3s ease, border-color .3s; }
+.fcard:hover { transform: translateY(-4px); box-shadow: 0 22px 50px rgba(8,11,16,.10); border-color: rgba(22,119,255,.35); }
+.ficon { width: 52px; height: 52px; border-radius: 14px; background: #EAF2FF; display: grid; place-items: center; color: var(--blue); transition: background .3s, color .3s; }
+.fcard:hover .ficon { background: var(--blue); color: var(--white); }
+.ficon svg { width: 26px; height: 26px; }
+.fcard h3 { font-size: 19px; font-weight: 600; }
+.fcard p { color: var(--text-l); font-size: 15px; }
+
+/* ---------- Demo ---------- */
+.demo { margin-top: 52px; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr); gap: 24px; align-items: stretch; }
+.panel { background: linear-gradient(180deg, #121720, #0C1016); border: 1px solid var(--line-d); border-radius: 24px; padding: clamp(20px, 3vw, 32px); position: relative; }
+.sim-badge { display: inline-flex; align-items: center; gap: 8px; font-family: var(--f-mark); font-size: 9.5px; letter-spacing: .18em; color: #FFC46B; background: rgba(255,196,107,.08); border: 1px solid rgba(255,196,107,.3); padding: 6px 10px; border-radius: 999px; }
+.gauge-wrap { position: relative; max-width: 460px; margin: 10px auto 0; }
+.gauge-wrap svg { width: 100%; height: auto; display: block; }
+.g-read { position: absolute; left: 0; right: 0; top: 34%; text-align: center; pointer-events: none; }
+.g-read .val { font-family: var(--f-display); font-weight: 600; font-size: clamp(56px, 8vw, 84px); line-height: 1; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.g-read .unit { font-family: var(--f-mark); font-size: 11px; letter-spacing: .3em; color: var(--steel); margin-top: 8px; }
+.g-read .tgt { margin-top: 14px; font-size: 13.5px; color: var(--text-d); }
+.g-read .tgt b { color: var(--blue-2); font-variant-numeric: tabular-nums; }
+.status { margin: 6px auto 0; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: var(--f-mark); font-size: 11.5px; letter-spacing: .14em; text-transform: uppercase; padding: 12px 16px; border-radius: 12px; background: rgba(255,255,255,.04); border: 1px solid var(--line-d); color: var(--text-d); transition: all .3s; text-align: center; }
+.status i { width: 9px; height: 9px; border-radius: 50%; background: var(--steel); flex: none; }
+.status.inflating { color: var(--blue-2); border-color: rgba(72,180,255,.4); background: rgba(22,119,255,.08); }
+.status.inflating i { background: var(--blue-2); animation: pulse .8s ease-in-out infinite; box-shadow: 0 0 10px var(--blue-2); }
+.status.done { color: #fff; border-color: var(--blue); background: rgba(22,119,255,.22); box-shadow: 0 0 40px rgba(22,119,255,.25); }
+.status.done i { background: var(--white); box-shadow: 0 0 12px var(--white); }
+.ctrl { display: grid; gap: 22px; align-content: start; }
+.ctrl h3 { font-size: 22px; font-weight: 600; }
+.field { display: grid; gap: 10px; }
+.field-top { display: flex; justify-content: space-between; align-items: baseline; }
+.field label { font-size: 14px; font-weight: 600; color: var(--text-d); }
+.field output { font-family: var(--f-display); font-weight: 600; font-size: 22px; font-variant-numeric: tabular-nums; }
+.field output small { font-family: var(--f-mark); font-size: 9.5px; letter-spacing: .14em; color: var(--steel); margin-left: 4px; }
+input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 6px; background: linear-gradient(90deg, var(--blue) var(--p, 50%), #232A35 var(--p, 50%)); outline: none; cursor: pointer; }
+input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--white); border: 4px solid var(--blue); box-shadow: 0 0 0 6px rgba(22,119,255,.18); }
+input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--white); border: 4px solid var(--blue); box-shadow: 0 0 0 6px rgba(22,119,255,.18); }
+input[type=range]:focus-visible { outline: 2px solid var(--blue-2); outline-offset: 6px; }
+input[type=range]:disabled { opacity: .5; cursor: not-allowed; }
+.scale { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--steel); font-variant-numeric: tabular-nums; }
+.ctrl-btns { display: flex; gap: 10px; flex-wrap: wrap; }
+.ctrl-btns .btn-primary { flex: 1; min-width: 200px; }
+.timeline { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; }
+.tl { padding: 10px 8px 0; border-top: 2px solid #232A35; font-size: 12px; color: var(--steel); transition: all .3s; line-height: 1.35; }
+.tl b { display: block; font-family: var(--f-mark); font-size: 9px; letter-spacing: .14em; margin-bottom: 4px; }
+.tl.on { border-top-color: var(--blue-2); color: var(--white); }
+.tl.on b { color: var(--blue-2); }
+.pump-viz { display: flex; align-items: center; gap: 14px; padding: 14px; border-radius: 14px; background: rgba(255,255,255,.03); border: 1px solid var(--line-d); }
+.pump-viz svg { width: 120px; height: 46px; flex: none; }
+.pump-viz p { font-size: 13.5px; color: var(--text-d); }
+.air { opacity: 0; }
+.active .air { opacity: 1; animation: airflow 1s linear infinite; }
+.active .air:nth-of-type(2) { animation-delay: .33s; }
+.active .air:nth-of-type(3) { animation-delay: .66s; }
+@keyframes airflow { from { transform: translateX(0); opacity: 0; } 20% { opacity: 1; } to { transform: translateX(44px); opacity: 0; } }
+.pump-led { transition: fill .3s; }
+.active .pump-led { fill: #48B4FF; }
+
+/* ---------- Product design ---------- */
+.design-grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, .85fr); gap: clamp(32px, 5vw, 64px); align-items: center; margin-top: 48px; }
+.render { background: radial-gradient(ellipse at 50% 40%, #ffffff, #dfe5ec 75%); border-radius: 28px; border: 1px solid var(--line-l); padding: 24px; position: relative; overflow: hidden; }
+.render svg { width: 100%; height: auto; display: block; }
+.render .tag { position: absolute; left: 22px; top: 20px; font-family: var(--f-mark); font-size: 9.5px; letter-spacing: .18em; color: #6A7482; }
+.spec-list { list-style: none; margin: 0; padding: 0; display: grid; border-top: 1px solid var(--line-l); }
+.spec-list li { display: grid; grid-template-columns: 34px 1fr; gap: 12px; padding: 16px 0; border-bottom: 1px solid var(--line-l); }
+.spec-list svg { width: 22px; height: 22px; color: var(--blue); margin-top: 2px; }
+.spec-list b { font-family: var(--f-display); font-weight: 600; font-size: 16.5px; display: block; }
+.spec-list span { color: var(--text-l); font-size: 14.5px; }
+.exploded { margin-top: 28px; background: var(--white); border: 1px solid var(--line-l); border-radius: 24px; padding: clamp(16px, 3vw, 32px); }
+.exploded-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.exploded-head h3 { font-size: 22px; font-weight: 600; }
+.diagram-scroll { overflow-x: auto; }
+.diagram-scroll svg { min-width: 680px; width: 100%; height: auto; display: block; }
+.ex-lbl { font-family: var(--f-mark); font-size: 10px; letter-spacing: .1em; fill: #0E1218; }
+.ex-sub { font-family: var(--f-body); font-size: 11.5px; fill: #5E6876; }
+
+/* ---------- Comparison ---------- */
+.compare { display: grid; grid-template-columns: 1fr 1fr; margin-top: 52px; border-radius: 24px; overflow: hidden; border: 1px solid var(--line-l); }
+.cside { padding: clamp(24px, 4vw, 44px); display: grid; gap: 18px; align-content: start; }
+.cside.old { background: #F1F3F6; color: #3A424E; }
+.cside.new { background: linear-gradient(160deg, #1677FF, #0E5BD1); color: var(--white); position: relative; }
+.cside h3 { font-size: clamp(22px, 2.6vw, 28px); font-weight: 600; }
+.cside .tagline { font-family: var(--f-mark); font-size: 10px; letter-spacing: .18em; }
+.cside.old .tagline { color: #7C8592; }
+.cside.new .tagline { color: rgba(255,255,255,.75); }
+.clist { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; counter-reset: c; }
+.clist li { display: flex; gap: 14px; align-items: center; padding: 14px 0; font-size: 16px; font-weight: 500; }
+.cside.old .clist li { border-bottom: 1px dashed #CDD3DB; }
+.cside.new .clist li { border-bottom: 1px solid rgba(255,255,255,.2); }
+.clist li:last-child { border-bottom: 0; }
+.clist .ix { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; flex: none; font-family: var(--f-mark); font-size: 10px; }
+.cside.old .ix { background: #DFE3E9; color: #6A7482; }
+.cside.new .ix { background: rgba(255,255,255,.18); }
+.cside.new .ix svg { width: 15px; height: 15px; }
+.repeat { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; color: #7C8592; }
+.compare-note { margin-top: 18px; }
+
+/* ---------- Sustainability ---------- */
+.eco { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(32px, 5vw, 72px); align-items: center; }
+.eco-art svg { width: 100%; height: auto; display: block; }
+.energy { stroke-dasharray: 4 10; animation: dash 1.6s linear infinite; }
+.eco-points { display: grid; gap: 18px; margin-top: 30px; }
+.eco-points div { display: grid; grid-template-columns: 40px 1fr; gap: 14px; }
+.eco-points svg { width: 24px; height: 24px; color: var(--blue-2); margin-top: 2px; }
+.eco-points b { font-family: var(--f-display); font-weight: 600; font-size: 17px; display: block; }
+.eco-points span { color: var(--text-d); font-size: 15px; }
+
+/* ---------- About ---------- */
+.about { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 88px); align-items: start; }
+.quote { font-family: var(--f-display); font-weight: 300; font-size: clamp(22px, 2.6vw, 30px); line-height: 1.4; letter-spacing: -0.015em; color: var(--ink); }
+.quote::before { content: ""; display: block; width: 48px; height: 3px; background: var(--blue); margin-bottom: 26px; border-radius: 3px; }
+.values { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0; margin-top: 56px; border-top: 1px solid var(--line-l); }
+.values div { padding: 24px 24px 0 0; }
+.values div + div { padding-left: 24px; border-left: 1px solid var(--line-l); }
+.values b { font-family: var(--f-display); font-weight: 600; font-size: 17px; display: block; }
+.values span { color: var(--text-l); font-size: 15px; display: block; margin-top: 6px; }
+
+/* ---------- CTA ---------- */
+.cta { text-align: center; background: radial-gradient(ellipse 60% 70% at 50% 110%, rgba(22,119,255,.45), transparent 70%), radial-gradient(ellipse 40% 40% at 50% 0%, rgba(72,180,255,.10), transparent 70%), var(--black); }
+.cta-ring { position: absolute; left: 50%; bottom: -520px; width: 900px; height: 900px; margin-left: -450px; border-radius: 50%; border: 1px solid rgba(72,180,255,.25); box-shadow: 0 0 120px rgba(22,119,255,.25), inset 0 0 120px rgba(22,119,255,.18); pointer-events: none; }
+.cta-ring.r2 { width: 1200px; height: 1200px; margin-left: -600px; bottom: -760px; border-color: rgba(72,180,255,.12); box-shadow: none; }
+.cta h2 { font-size: clamp(38px, 6.4vw, 76px); font-weight: 600; line-height: 1.02; letter-spacing: -0.04em; max-width: 14ch; margin: 18px auto 0; }
+.cta .lead { margin: 20px auto 0; color: var(--text-d); }
+.cta .btn { margin-top: 36px; padding: 18px 34px; font-size: 16px; }
+
+/* ---------- Footer ---------- */
+footer { background: var(--black); border-top: 1px solid var(--line-d); padding-block: 64px 36px; color: var(--text-d); }
+.foot { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 32px; }
+.foot h4 { font-family: var(--f-mark); font-size: 10px; letter-spacing: .2em; color: var(--steel); font-weight: 400; margin-bottom: 16px; }
+.foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; font-size: 14.5px; }
+.foot a { text-decoration: none; color: var(--text-d); }
+.foot a:hover { color: var(--white); }
+.foot p { font-size: 14.5px; max-width: 36ch; margin-top: 16px; }
+.ph { color: var(--steel); font-style: italic; }
+.socials { display: flex; gap: 10px; }
+.socials span { width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line-d); display: grid; place-items: center; color: var(--steel); }
+.socials svg { width: 17px; height: 17px; }
+.foot-bottom { margin-top: 48px; padding-top: 24px; border-top: 1px solid var(--line-d); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; font-size: 13px; color: var(--steel); }
+
+/* ---------- Modal ---------- */
+.modal { position: fixed; inset: 0; z-index: 80; display: grid; place-items: center; padding-left: var(--gl); padding-right: var(--gr); padding-block: max(16px, env(safe-area-inset-top, 0px)) max(16px, env(safe-area-inset-bottom, 0px)); background: rgba(4,6,9,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); opacity: 0; pointer-events: none; transition: opacity .3s; }
+.modal.open { opacity: 1; pointer-events: auto; }
+.dialog { width: min(460px, 100%); max-height: 100%; overflow-y: auto; background: #10141B; border: 1px solid rgba(72,180,255,.25); border-radius: 22px; padding: 30px; position: relative; box-shadow: 0 30px 90px rgba(0,0,0,.6), 0 0 60px rgba(22,119,255,.15); transform: translateY(12px) scale(.98); transition: transform .3s; }
+.modal.open .dialog { transform: none; }
+.dialog h3 { font-size: 26px; font-weight: 600; }
+.dialog > p { color: var(--text-d); margin-top: 8px; font-size: 15px; }
+.close { position: absolute; right: 14px; top: 14px; width: 38px; height: 38px; border-radius: 10px; border: 1px solid var(--line-d); background: transparent; color: var(--text-d); cursor: pointer; display: grid; place-items: center; }
+.close:hover { color: var(--white); border-color: rgba(255,255,255,.3); }
+form { display: grid; gap: 16px; margin-top: 22px; }
+.fgroup { display: grid; gap: 7px; }
+.fgroup label { font-size: 13.5px; font-weight: 600; color: var(--text-d); }
+.fgroup input { width: 100%; padding: 14px 16px; border-radius: 12px; border: 1px solid #2A3240; background: #0A0D12; color: var(--white); font: inherit; font-size: 16px; transition: border-color .2s, box-shadow .2s; }
+.fgroup input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 4px rgba(22,119,255,.2); }
+.fgroup input[aria-invalid="true"] { border-color: #FF6B6B; }
+.err { font-size: 13px; color: #FF8A8A; min-height: 0; }
+.err:empty { display: none; }
+form .btn { width: 100%; margin-top: 4px; }
+.form-note { font-size: 12.5px; color: var(--steel); line-height: 1.5; }
+.confirm { text-align: center; display: grid; gap: 14px; justify-items: center; padding-top: 8px; }
+.confirm .tick { width: 64px; height: 64px; border-radius: 50%; background: rgba(22,119,255,.15); display: grid; place-items: center; color: var(--blue-2); box-shadow: 0 0 40px rgba(22,119,255,.3); }
+.confirm .tick svg { width: 30px; height: 30px; }
+.confirm h3 { font-size: 24px; }
+.confirm p { color: var(--text-d); font-size: 15px; }
+
+/* Reveal */
+/* Mission */
+.mission { background: linear-gradient(180deg, var(--graphite), var(--black)); color: var(--white); text-align: center; }
+.mission .wrap { max-width: 920px; }
+.mission .eyebrow { color: var(--blue-2); }
+.mission blockquote { margin: 26px 0 0; font-family: var(--f-display); font-weight: 500; font-size: clamp(24px, 3.4vw, 40px); line-height: 1.25; letter-spacing: -0.02em; text-wrap: balance; }
+.mission blockquote em { font-style: normal; color: var(--blue-2); }
+.mission .pillars { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 48px; text-align: left; }
+.mission .pillar { border: 1px solid var(--line-d); border-radius: var(--radius); padding: 20px 22px; background: rgba(255,255,255,.02); }
+.mission .pillar b { display: block; font-family: var(--f-display); font-weight: 600; font-size: 16px; color: var(--white); }
+.mission .pillar span { display: block; margin-top: 6px; font-size: 14.5px; color: var(--text-d); }
+@media (max-width: 760px) { .mission .pillars { grid-template-columns: 1fr; } }
+.mission .vision { margin-top: 64px; padding-top: 56px; border-top: 1px solid var(--line-d); }
+.rv { transition: opacity .8s ease, transform .8s ease; }
+.js .rv.pre { opacity: 0; transform: translateY(24px); }
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1000px) {
+  .cards4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .foot { grid-template-columns: 1fr 1fr; }
+  .nav-links { gap: 18px; }
+}
+@media (max-width: 880px) {
+  .logo-img:not(.logo-foot) { height: 42px; }
+  .nav-links, .nav .nav-cta { display: none; }
+  .menu-btn { display: grid; place-items: center; }
+  .nav.open { background: rgba(8,11,16,.97); }
+  .nav.open .nav-links { display: grid; position: absolute; top: 72px; left: 0; right: 0; background: rgba(8,11,16,.97); padding: 12px var(--gr) 24px var(--gl); gap: 0; border-bottom: 1px solid var(--line-d); margin: 0; }
+  .nav.open .nav-links a { display: block; padding: 14px 0; font-size: 17px; border-bottom: 1px solid var(--line-d); }
+  .nav.open .nav-links li.mcta { display: block; padding-top: 16px; }
+  .hero-grid, .split, .how, .demo, .design-grid, .eco, .about { grid-template-columns: minmax(0, 1fr); }
+  .wheel-stage { max-width: 520px; }
+  .hud { left: 0; }
+  .how-visual { position: sticky; top: 72px; z-index: 2; padding: 10px; }
+  .hstep { min-height: auto; padding-block: 28px; }
+  .compare { grid-template-columns: 1fr; }
+  .values { grid-template-columns: 1fr; }
+  .values div, .values div + div { padding: 20px 0; border-left: 0; border-bottom: 1px solid var(--line-l); }
+  .hero-strip .wrap { grid-template-columns: 1fr; }
+  .hero-strip div.s + div.s { padding-left: 0; border-left: 0; border-top: 1px solid var(--line-d); }
+}
+@media (min-width: 881px) { .nav-links li.mcta { display: none; } }
+@media (max-width: 560px) {
+  .cards4 { grid-template-columns: 1fr; }
+  .foot { grid-template-columns: 1fr; }
+  .timeline { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .how-visual { position: relative; top: 0; }
+  .hud { position: relative; width: 100%; left: 0; bottom: 0; margin-top: -8%; }
+  .step3 { grid-template-columns: 44px 1fr; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+  .js .rv.pre { opacity: 1; transform: none; }
+}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="logo-mark" viewBox="0 0 32 32">
+      <circle cx="16" cy="16" r="12.5" fill="none" stroke="currentColor" stroke-width="2.6" stroke-dasharray="62 17" transform="rotate(-50 16 16)"/>
+      <circle cx="16" cy="16" r="5.2" fill="none" stroke="#1677FF" stroke-width="2.4"/>
+      <path d="M24.4 6.2c2.6 1.6 4.4 4 5.2 6.8" fill="none" stroke="#48B4FF" stroke-width="2.4" stroke-linecap="round"/>
+      <path d="M29.4 10.2l.4 3.4-3.2-1.1" fill="none" stroke="#48B4FF" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-info" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.6" fill="none" stroke="currentColor" stroke-width="1.3"/><path d="M8 7.2v4M8 4.8v.1" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <linearGradient id="g-silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4F6F9"/><stop offset=".45" stop-color="#B9C1CC"/><stop offset=".55" stop-color="#8E98A6"/><stop offset="1" stop-color="#D5DBE3"/></linearGradient>
+    <linearGradient id="g-silver-h" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8E98A6"/><stop offset=".3" stop-color="#EEF1F5"/><stop offset=".55" stop-color="#B9C1CC"/><stop offset="1" stop-color="#7C8693"/></linearGradient>
+    <linearGradient id="g-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A414C"/><stop offset=".18" stop-color="#1B2028"/><stop offset=".7" stop-color="#0D1015"/><stop offset="1" stop-color="#20262F"/></linearGradient>
+    <linearGradient id="g-blue" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1677FF"/><stop offset="1" stop-color="#48B4FF"/></linearGradient>
+    <radialGradient id="g-led" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#BFE6FF"/><stop offset=".4" stop-color="#48B4FF"/><stop offset="1" stop-color="#1677FF" stop-opacity="0"/></radialGradient>
+    <!-- The AutoAir pump concept, reused at several sizes -->
+    <symbol id="pump" viewBox="0 0 420 260">
+      <ellipse cx="214" cy="232" rx="170" ry="16" fill="#0B0F15" opacity=".18"/>
+      <!-- main cylinder -->
+      <path d="M92 70h214a0 0 0 0 1 0 0v120H92z" fill="url(#g-body)"/>
+      <ellipse cx="306" cy="130" rx="26" ry="60" fill="#0D1015"/>
+      <ellipse cx="92" cy="130" rx="26" ry="60" fill="url(#g-silver-h)"/>
+      <!-- end cap (silver) -->
+      <path d="M306 70h34v120h-34z" fill="url(#g-silver)"/>
+      <ellipse cx="340" cy="130" rx="26" ry="60" fill="url(#g-silver-h)"/>
+      <ellipse cx="340" cy="130" rx="17" ry="40" fill="#C6CDD6" stroke="#8E98A6" stroke-width="1.5"/>
+      <ellipse cx="340" cy="130" rx="7" ry="16" fill="#2A313B"/>
+      <!-- blue LED ring -->
+      <path d="M300 70h6v120h-6z" fill="#1677FF"/>
+      <path d="M300 70h6v120h-6z" fill="url(#g-led)" opacity=".9"/>
+      <rect x="296" y="66" width="14" height="128" rx="2" fill="#48B4FF" opacity=".18"/>
+      <!-- cooling fins -->
+      <g stroke="#2E3540" stroke-width="2">
+        <path d="M128 72v116M150 72v116M172 72v116M194 72v116M216 72v116M238 72v116"/>
+      </g>
+      <g stroke="#4A5260" stroke-width=".8" opacity=".7">
+        <path d="M129 72v116M151 72v116M173 72v116M195 72v116M217 72v116M239 72v116"/>
+      </g>
+      <!-- top highlight -->
+      <path d="M92 78h214" stroke="#fff" stroke-opacity=".22" stroke-width="3"/>
+      <!-- engraved wordmark -->
+      <text x="262" y="141" text-anchor="middle" font-family="Michroma, Arial, sans-serif" font-size="9" letter-spacing="2.5" fill="#6C7685">AUTOAIR</text>
+      <!-- sensor pod on top -->
+      <rect x="250" y="44" width="38" height="28" rx="6" fill="url(#g-silver)"/>
+      <circle cx="269" cy="57" r="6" fill="#1B2028" stroke="#8E98A6"/>
+      <circle cx="269" cy="57" r="2.6" fill="#48B4FF"/>
+      <!-- air outlet nozzle -->
+      <path d="M362 124h34a6 6 0 0 1 6 6v0a6 6 0 0 1-6 6h-34z" fill="url(#g-silver)"/>
+      <rect x="390" y="120" width="10" height="20" rx="3" fill="#8E98A6"/>
+      <!-- electrical connector + cable -->
+      <rect x="40" y="114" width="40" height="32" rx="6" fill="#1B2028" stroke="#3A414C"/>
+      <rect x="46" y="121" width="8" height="18" rx="2" fill="#1677FF"/>
+      <rect x="58" y="121" width="8" height="18" rx="2" fill="#2A313B"/>
+      <path d="M40 130 C 16 130 14 170 -2 176" fill="none" stroke="#1B2028" stroke-width="9" stroke-linecap="round"/>
+      <path d="M40 130 C 16 130 14 170 -2 176" fill="none" stroke="#48B4FF" stroke-width="1.5" stroke-dasharray="3 5" opacity=".9"/>
+      <!-- mounting feet -->
+      <path d="M120 190h44l6 16h-56z M240 190h44l6 16h-56z" fill="#232A33"/>
+    </symbol>
+  </defs>
+</svg>
+
+<header class="nav" id="nav">
+  <div class="wrap nav-in">
+    <a class="logo" href="#home" aria-label="AutoAir home"><img class="logo-img" src="data:image/webp;base64,UklGRnClAABXRUJQVlA4WAoAAAAQAAAABwIAxgAAQUxQSLMyAAAB/yckSPD/eGtEpO4DsiRZDcPoPSDZdfnl/gcWIFm2/iP6PwE4siSR/J8fiWTCo7AhcSgREXEKMtF43xWO6RJHgIAksXkO98TAUVKDEXGGG2REIGsCJBBxAPl9kxgwQZzS0iEATJCHQTIfcQ5bhohlJPkyjhPLl/F1zAck2FzM4zXu3pLMjORO7l7Q7AlyCwMs3crHwh6QRHI3s018jz+mZucye0odwrbzFRwLki1JmSSy4y2b45hI3IBmroZLJAmpIDloJFnpGVWSSHLOF/xl/wZ3kjb2PCXJiMcM7gl9HDjjK8wSM8DMFng9MLt67NDGuYhYZe/g4OkaXY12zzt6iwG4H7BxAVfZlAzKODE9+H6yyruYsw7ZcK+iMFwf8X/OSpLGOzNAiTsQsY6rnIwoVHjzP6AnxmQc5AC80Db6IzJ3z7xr932vs8omZEX9mEmEf4aZvcKMQEIy8d74Fq7scG7yKxav4bfwK65ldxFwn2PBoHvm/hXO2ixjcG7yC7xrHGUzTfQiilLXjD2hJ4CdMOHewWg7eTcujA1Ezx1AA4jooaEEGXfTgogp1gDYhZux3E+df8gLGoKvxIT28gJ3BvDFALCLOv81Jb2JVEZSCR2sF5FEya8GUKF9Xe4kKaGQ9FUkSCwAu1D5XUtnzoxaOh4PnvHoGQ4Hfvz/r7MTZ3u9P9+Zc07cFUggCcQTCAmErrPS7rJ19/buZXXfuveuu7d33V3uurJ2LU6WEHcCcfecc+b3ff8xv5kzv99MoOe/iJgAJpUlZQMMrUj5wcXjzcP7hs+dpj2RzSS5IgHMWLF17aY0JEyTZUvzyVNnPv7ykf2G5EmxSEB66Cv+5q4WpUGWh2dSeu2Zp//zmVuQJruUBOmhb//wTRuykYAEGWwUgrzjj/6NTExmRQJWf+eHbxqyJYGxgQjancluiuv//gd/AzFZFQFTv/ivztluSQLbChDA1dw2m1IL/9UvYjQJpQQs++4XbLeKbGwrgFsXj5y48bRvHsoCb5jf2D59/cwFQ8Dtn3wrTpNNSsD233zNLlrZzi0FcGXvzt1PvXKZctNx9vDKRx/bvKKx+Ue/aZ6lyaRI5KHP+PImFArcKmxu7Hr+qReOjAEEAtMusA0we+sT79zIofdBTKoo1DulgMWf9EVAEQ1nkn3mLz741MvjQMgGAWozGEDKhhmPftJn+jenMZkagJJ6ogRs/r7D4BypIODsX375vQAhW4KCiYZso3CG2V9/6J8ewpMgEqBgypYFQApNQCkgnvidq3Z2yBGc2f3vfw4oDKIAaMSCZePTH2nk5v7DzeLgtQIIOaOgYOgLfoNJT6Wg/C0/s+HEjqfmAZEiSqQUwOJP+wxgXKmBOPuRf9wNKAxkIBasWrvpwRlz7y5SAIxHcezcS7ufOXANQgIlmPrQypjUiAQ074IYW/87SwCe/cpHmgAS5Ys++/fWQOFGE24fffLDxwASkIGR+9dveNPKJQ3KCyBE6e2jT3742aOQApRghiYxFLDkc3/2/z4glGcOFWFj33r6lz5x8z0AMX3lF/7RCRtIuvXKoac/ehNQgjFDc/WWx7atng6QLRAIwGCsAM797d/OggiQmMQMePhnj9mm1AIoCtu+dfInh4JZ3/77F3zz0uUbB2+8uPuYAVI4jwFzH3nrm7dMA7KFBKazKLWtgJe+9wGIYHJz5OvfA85SiSi3ncA/gDQyvGwIxXJK1cCjGaY+8NAnrjKQLckYQ+rCGYQEOIc4/3v3Q2gy466fhlakoIcmFxdWEnRUNIeaQQvSvQ9uf5MBCglsEuXu4KA0W0JkJ87+1P2QJi+WrqOIJj3P/kKSUhNblM9YsW3tQ9MAsqXIDgG+cfj6rpN+5kaUaHzpQ6Pr71mwfAigkORsn/3OKYQmJcShcVrDVNjKP0WivLnw7nd/6c/+xd4xAGcIIQmu7D3w8V2vnrhuJqx5yzese+z+hQGFlFv2k++GmISQrh1BlOYCCE0IRKz7sm+4vnz1rWWrdBftRUZSALSO7Nyz82ST0hC4kyAboLFo3Sc+snUKFALe/N4paPIh+AidU6KnoY+TZn/aH799CRMff+Xcrr0vjNIeMsZMWEgUQNr8ie/dOgWKTOOh+7AmGYKVF8Ml4sgf72DzOxej7szVZwlg7vpHH5u2ZqYROPZfOfvSlR0kAAV2QZVCKiBtfs/nbSbRYvUmPOnwU8qUP/2NPwV84R+2FOqm0IcOCUVkgCVTTbtO3KY0ZOcMICA62OBu2iUVMGP7Z1ylYRY+HNZkglhxLtyW46NTSMhD//+7gNyp8K23kiAlIJsuRWCDBRImM9EEtrsAJBWw+cf32+P+uWAyMfGVNuX/mwYgL/6eh1aiTqTvJUgJICTAbpMBgW3KR4aKGavV5ri1r7hGe8jdAArDgm+7YPuBhWjyIPi9XLQ5WtsUADJp2f/5MDbgvOvzCKn5xT/89j3nTI+X5CUr5m/1Q7PHpy2nfOwYe84e3rn/9C1QUjdAJNjwK5fNTPBkgZixy7kNvI0SpMzRj7xCAnN148YAsfCnL+n5S7tPHTs8dOMVoHlvw8SWGX501sgmzZhBjy8ce/6fdwApugIl2PjnGUuTBeGVxmVdiwRfdxVjf8++BAg2/aNtiuuNaweMh9c0jabTMWMEqJMxkoBzT/3ef10moiuIgE/b6X8ATRIwpdWFugAUHDXK8fSvhwAFfOI/tBITdJYhQPTYdgh2/80aILqCgIW/6F9VaFIgeSuZjuPdoQZWtvIvk2gP0OOf88lLwUUWCkCUZnodCJxDnP39d0FEV5Dgk0/8CGlygKm4zI2VqKv29TONjt9DtEEC7nrb+x9ePkx9s5Gw7dbfPA6hrlBw759+KpOEmXJl3c9Elae8F+Dps8klKAUwd/nGu7fMGlkXHeLqPnC68mzuykOPTtXaWVMBsoUTrV/7xQNEV5CY+plLJwncAVhNngDKa1Yj86FRulSSaW8s6+C4eYIe6655GzZuWLNkKjjLiQs/2iSpKwKmTxI0Oom1Q9YEgFkzcbzyQaITIIlsJq6YSDalc5dv+6SH7gVnN/jPd0B0hZgcNAdzuMPKu+gBD44U1oGjoW7KpS7stl5KyDYw/7En3rkKWvjaNw+Rupo8PFKIjtPmkyYksSgQ/0SaWI0VScC89//ueXss+5/nMSmZb1OuPPJOxicEnr4M6cIGon/alQJY8YGX7JbvegBrssHsPIJLCL7zXz8FTYh8/SUcT86U+gpQEsz7so/ZLFmFJxnkqT98v1UGM97zJ9scE0Jk8A8R/QZEgpHPfw7mL0KTDKz/zql04fGp26WJIcj+ETQAQAlmfvcxOzPZePki3Sq83u4BZt+nJQalEiz/PTPpOKaukN5xd46eDFYl+NSXEfZkwtKR7sIPvAn1AJQ0QCDE8ztoEpMHYtmI1Q3ZG3BPBm+C/3HjFJOHZsc1uSu0Pu4MhHh053E80ATqxviNl6QoMUK4xO4JjN6me7FumnVHgMSFfz+GBpMipRRMOJLeQClSCnoc7oV57QC5KxiZwh0zce1f9g8gpRSUDjutmpLV5nT5KGMQb5CURHujUSybX8iNvdceHHrk8MmmnS4ezqgHqDhN98E9G6JxpyAYvEoBMLz88eXr5zzkWDViyq4c88e/bCnxhiiA+avXrkvbprSWzSvk5n+03qUGY8Lp8r4//k00MTXTCxMgxyMZKSXdCZAGTCRg7if+wB88dcb01EfeRbzxUcATf3pkWWKiOej4R1Ol7pQCihsTMffevYD20B1gwCpg1hO/st+l2QjUjXHL596F3ugEvONfbJONQCVGyGXZjZ8gulEAzdVb3466S3zRx/f9/d9917sW8jpbCVa8/3MACiRELxOMLSPe2IiZ73kbLrJEzzOvLURdwMK3vemhIUN01+XRX/tp6XVUwKxv+SxwVlCl+Z43Otz72Ag5hajS/mxSB2nKdxyn3WKixoYEP028blIi/Z9dJpOoOKenR9AbmtmrKYKqC/8s0SH4adtZIuh1gT6VeJ0U8KZ/swslKnfc3kK8cTEEiMqzX5yKSsTS00WrEVSa4/lh6XVRovHQVjKijnl4K3rDEtw2oob2xm1ESeIzF5GoOvtriNdDweLH5+CgngVvwncSiSjJShp4iv3HMLXMjfeVSelTMDU4Ng+97lHwro3koK6ZNSnrTqCIlCLRvQZd4g+o72MNShhegKojjz1Oer0j+OpREDUqGPSKlEJ0nDVtXXHv+ty6/6+/fi4abNKcvZFrEqxbRpQV1LHwl77uESOrEjXXYItEeWMJm0d2v/fxRVPupuOTny0NtMRXibrKcx8klUUtYCmvfxcmq2YDXQJG7v/k5Us3TpkD3EOpc5sbX0UaaGp8MIq6kPUYARB6CdfAbMKveyiouzS4ArZ+/z89f8mUe1a2hCgt9K9IAyzxvvGgxo801Za4QD1nJut1TLRJtSuKgRXM+/Vrbi9AQnISXRbprxADPPh9F/UJ1t9HlJxFNRAb55rXr6ZPF8wbVMGa34UCCdHjF4gBFqy6aNdHnvflpJKdtQDEG02x/B40kKSZT9KKRM+deJlBHnzABTXO/BYBBCeuyHXQ+BsOyJnBHPyIW0NUevkQHlxizsF6iR1TEYjjl6hBeMlX6vWKwn0zqMWS0zmo0rxybJAlPjdn1+vGZgIST9zjqA6n71zleH2SRveAX08k3rGIqnaPxgCTPp8i6kT2/yYBbEuZGoanPYJelyQujfP6MrGBTMV7LAZ28OA8gloX/mvUlk0tMyt4XZp4h1P/aCAJHqTi4CXqKSmSFJLq9UPkVK/sIwsQsFeqBawjvw4JtryC+6c1oKYsQpVYFw/gqhQpBd1GSqqJmLWf2uf8KQTm6WvhetyN9bpDOnoa069uruydXAe5C7mb4O5VFWW9GhUpBTY0h/P9cw7cfuDA7dYYoBR1SHx+Vv20HTCvnqUWYso0+lURZfbASZd20L/KaRXqoEiRuyFUknsVKSXRtVJ0s2SEagvtJ4reKQUwdfHmT5i2bloeY0Tjx8Yv73xp394zEFGZlP7GRe3gkSgEjSa1FA/chSYideMeKVKILiUZDZDEQfcR0KJj0PNQLyR6qjalNJQ2DWVVw8lEZ01ECVjyeb+1o0l7A5YNU+rXnv7ie0BRUbDpul27YOsaBDdO1wOas+lekeg6dXI3kWifs3qVAKdLZ2iPpAGR2Ho93FfqEPDYN/z4w124eXB/w2689h/0UrDua77j2/7yyZY6xaXvfi9A0L4RU6mLfyV3IrpSguHHf+dV2zgjkDIyWAE++SvbQFFJ4ltcUHvlWduQ49ZTuB6NWd0FwIg7Fa1ORIcIaNz/2T//b7uuXqK0dXnnrr2eCURoAIi5T8sMxpU/spjevvbdQ6GJiEU/sg6Cifp7f0TB1O1DtM6jSqzrX/9K0yUam4u6CJj7Ze8HnKUISoNy2wqu/sU7ISoQ0z6VfjTbMeJ5VAsj1EkJPuGdj81rqSyuPz8exs0Dhw5SqoC1P/LmIdpTWft4PvLsP3zkDCT1m1L8qhmIZtZWKHqi8A+SJmD4JSiYsBt8Erz1KaABUclE974HlSlofN7zQKEU9Ng5ufVb9yP1LPG2wtEHYutIFohayo230Vmw/q/n0uNT3yqJgDU/d9HgjES5TQjglQ/+0Uduk9RfwRe75UEgXh2jlRo9oWjd+nzUnTK0UmNitBq/z6pTNiCqdxc+vYZoC9j+D3YhNajSLfvMF0D0KvgCitQXa1YiuG7VAbOeXCbSV581BerGZZL8XSix9Ocv2C0pggkaO4Rf+NVpEP0ULD+eM32utjj362iYXhc+s5boRud30xqhl0X6KN/m8SZ1H/fXkIBgxg/fcFE0qdq5Zf/MLKI3weoVBP3g6Q8j8+J5uQ4wTrlY+Hd2Kxr0tsjnlgXvPGC3sul1doIXvrxBUt8ohp+R6fdxQEXz/5jeq5gxtavkP26F6fHH2GZR+1x8NgmJTR8zDmqZzYPD9DbxteTUD2Qew9ZrL5PrsWDIaov0hxQhep71OX+Z5tIKUaVN8I/fAdEviW/B9P29GJjyONXOWYg66an/PzK9vso0UXv7wn1EiC8+51ZQV2WiN9LwkxZ9KbYNZyhGqWWwdgHtwdfaVJnjN/5WSFSeifNf2yD6I9h8UQNgA0as3laNWEl0CH5wNLlnMWUTUbvC/5II+Gm7MPUVIDyx4M3j9KlYvQrBpXrA3PUEiKk7KoJCBLUskv9hOakfFMP/YdP/Ldrv2lLRjXu7SHwxPRenlKh/9tfQ1Pxfcc6uE5iT56IXP+Ki0See/jAKXqyH3JgDbeuuVVZjFz7yblIfxOiTDESVjLkaUtA5sZ7cIwfPrZ1TvxzfsaTFpRVk6m54LqeJiPmHTL8WPIZh53i4BsB4Wz1dG2Rm0ofBU2N4EJTPoeJrt7sIZlGh5w1ZdSvS95q8l75MV18kJpD4VGf1S2brlAxnLOqYeQS3Rapu0Euz94QZkBLbVKiCzN6TymUitqHexQOYuju/zQKpH6xDs6TupD9xi341q1cibl6hluJ9U7Mwp1/Fg0QIXK/gJ6mzVQ1gKhadRYjej99eUb8i/m0EwPSl+Raiq2DlRee+Ic/YAhw9gusA1zLt508xaH2DWgeP38I1qlSAmVnV1S6C+1agHplDJ++l9jm+JO+mb82FB4huEt+B6V/zGDmKXfWwdhAglAaNOX5Yrk/E7B029fVY74K1i6wc21A1zxBdbJhN70eHVqOaZR3Y9uwV9Q2Ff7Y7xd9H0Udi65QcfNRRB1h6hjY0aIAXz6hGfMAFtc3xT3/bO5g5BbCo2HQO3hEVMG8adc/xlb9zVO6fnM/fS3QKVlxM7qs1KxD7JddAzL6O2m4PHFP8E7UNHrqYc33MO8Zx7woDwyPViBtdJL5+qFCPzIvzl6N65Xj54R/C9HHhryd1SnwDpp88/WGsl/+NevwmCUh+Fg8YnPb8h1SXeEqmtkXjgzxBhYLgvjWoAsfYc7iLr6TCU9eoe5F+7B//S31lPr+JysTQM/1F5jFyXP91VIPMRkz7bQbxT11N9Qi+qKA+dv4FoorSlKi4oHPwS1UMr8eql3U6FtLXyVveQSoLHrlJ9JXYOpLh5YtydTCfcg2gHB/8K6kOofl7wtS2SE/eJFciYDxXNDrehfj73olj95Cpv/uL3PwUotP3O/fbmlWIa6PUUDwwnNXWGEDAH5FqwY+Z+prbPweuwi3gvhFXYQ4ewmVi+rOoV8HBe6i/UZ+Jd81BbWLOftPfytO3YC7uJVcHS4cpPUIMnkIfblLD4IEz2fUp0m/9e4MKxcyVBKsbWRVAi87yvNm9g0/+elS7/g/ufxepLfFEzn2GWQMau0otHW1mX5YHTrDxXqIOf+YWtTU33ixVQR5eDoxSccqdoDAVfsWXcAcu4rvKgl92q9/g0ZTFKddA3LuWAGgwgJXnbEGVBZ86WuTaqEj/8gS5EmgBs6qxPk64TF4/7gouTyXuPPCHEiDm7HfRb8GGu53YLVUHzamUehCBhqhcMeMFF65Nsj/t74OKReaRauA0ovNsrN7V3I7BIF4aQZD0vpzdb/L8zcCuy3Jl5tgucokHEguqC74LU9/s/2wqV9XeqGqYbhfS93aJEzU0qsU997UFV5Tp+xyPkfnQy8qVQaNBaSMNIuseXFGw7nTUKOXi/STXoagm2NGFeRhXcGpBGFBU0zl/24fIlTiTKAhVBXMWIcScWcEgXBtZukH14u41RNvZi4NI7ECV/b4zNY5/bYrKhRszK7E40UXVn/UJ30QNxw7cCBy3f+ntH4uiihxgAbkqZTYDiffOQf0n1s108rM1AFoA5tgJPHjAVBxsuZ5dH3n7FqK6cYpF64kqYKiTiun3o55Zn/Rf/2tKjrF7v7bh3lnf+qtjAG79CkGFOa7/yb492vzou6dVhVkIBL8RmUGwZDlivAbKfGoyQAQ1NqA6ON3YiStq/IkL6ms9iVTdPRCi2tatThDTqHJknPYVLXpv3foQ0abmp5OjAp78ZUof/tfKYBSC5WdDA4A8fSsiaoD4X6tyUG/nBORacJCKEp+ei1wj/C0kqjaboeVKzPG95DKxZDbqlXV+jxqZyMtSBXD5VYWkpC2LCCocO0RKkVIwK1c3Gye+3B4I5jFMrgMMLaRUtXFACyXk6uIviaIKaehDLlyfQk9+mahhAffNqgRyi45i+bzeZW5fskwqNjQL9cxcuo2AxHeSUwXz6dxg8WNWJWJb5NBfOjMIxdZpLZ53cmUqmpsRkMfrIk7+yb9cDT36Baiq3DzxrzJVJj69yK5PiK//3VQHwfIpWZWMFp1giN5nzo8iEyyjQrP3sgDR+AgVeuW9uAOJz5xlVQEJsfyMNSDuX2WuUM/pgOPWi7gevPyVR2mf+ueXKnIU30IUVUgzPqaC+mb/e1OqA1BQqXnxerjTdoqeFey5FgazoQq4StmDW1DPHH+G6BzcdcauxsiPkwcDTJkPY7fr8QgZxHVqmdPe/5cGAhV8VlFUoZy2UXHwzRZ19peTGARwm24b9L5gCECefRfqnXi+w5un5p65cfPvcnSB9OcuqgHrfZiBqEKPogNHcR2mURr1gF+mMUa7GvymUe/M6kCVSAsO5VyjzL55qBYZllTV7KQca1AFp0qYvayS4iTtmUcxvc6xI7K6SXxNVQ4vX04MBmA7Hr9FDYO1Sx3U1SnvFh2DJUfouWH+kky1wTe7oMaOryMhKQSuZKrYgqsQO1AZbiyn95kXEMDiIXpv3dyLQZ69BfUM/oGg2+DRUVxJEo+T04AINi/i9ou4OpjWoF21yHrtJl0mfuC+Inpg7ACjakK/d1i5RjkO/kkiMmTGuFmBeGgOlb9GlyoqgAQgVk3N6hlcuwUQrFlO9MoNPjYBGBui2isFT2AG5qLlcINaTrmn5HlUAxgvugk9Ooa7MTYiAK5QefCrot4/fQ6YNtyavTpGH6sAmolc1UgnsWoVqmC8zazG9Dxz+FUMsH040+usk2OoK3Mq4wrM83nFW4hBoTy8Hp4jqlOech8CztZEuAsx/HEyGIMlUVpcfeXIb53BFUkLDkeuk1jxOW+b7gdnjU9bCqAK3GquQRU4xk53gqGp9Nxx7UUMsJJKj1sGsxn3jnPFBOBsptqkxxdmDQrMJrhCPYdpb9CHwS/GWEGiPJ+89VKx67XXDp+7XlB54pupt/gAdVUeXkq1F/eROy1P7hn4NqA87QFUxR4ClKeuRz0rtCuCCSZVEhzx+zADdF1w8LxcnfkEDOS+0AOnU4LWsdsnDuw/env32CVKFZVJSw4r1wpsg0CqClxUpKCjuD+yenflFu0zFtN7hw9ROm0xVZ7Jmoip0vKOBW8hBkewfimXblMDaNDe6Adg9bd/7+hzNw7fuG3aJWRsKg9+ydRdQV1V5IpCncwCep/Ze5JMcP8iomfIRzEE6xYTFQwz4WpAvH1+1uAQS9Yxdo4aivunWObQFbkPROcEZExNg/VXsutWX99ePBdVYPaf7ZR5qAJoUrqukanw/CVKh5qmwqsTG6no8rVPwwzQHGu4cgBXB0tHjDl5hX4gUsIYTK2DX3WLwSzmLb5nPlWaM6NyWdUHUdtq3Dtz6jhuW0EFwTMTkVcG6p05cvlRNEjMJrhELZvTARrBnTP0K1fCg8ozl49R8Qgdg3vWERXsJ8CaT6Xns2hfUwWMTgScqFAc+r3vbTJIxcapPIdq4KXrCTA11WDgd5QZ3K1c1auoDBpTqXIYUG5sRL0zu1rhthaVTp/YXS1XMoDnz6CuLQBFPXJrEIQWHE6DTLOwKtnZzbIR905cpn3JfCq9TLmqyGyfiLyWrN4B1mARy1aw60a4OrOybfRaHcTcu9AA4FsY4MKPkKk06ChWjFi9cow/jxFLlqLeBc91qLg5EZjNHVW5sYFLLWpo1oB1eSeuxfIBIC04HHlwAUHFXcAQlYs1yhWouFWPYbm7Im2/s2Du49wRXB00AGHqWdD/wbeYO7h8rZPZjiu4fYv25TI9z5zZS65OPNTI6iby0rnEHQXWcPlCHcQjQ4WorfovWHQo5wGW2eZKHLdexGUwjd6bQ4cwmU1Ueu4atVy+lK6Tt2brjiIemMURatkwNXb/Jf6HCwa4mUfFLihXnrUB9QycQW4srcK8fD1cElXIizYpugneT8Ed5r7lHKrHrDltUQsz3HfS0JNuDTJoVZY7wKy5VHmzjbtWEb0D03EH6h2ZT7S7kOZvQncYj2xgDFUnli9DYgeqQWZ73yU+I2cPNlXVnN0htGGho2fmuVYyLJxBheIFVHamEvGJsx2dEp9FbtxZyHEXz46HKwPNBjhBPaf0mzT0IbcGnSpRHt4kldhvUabCDIj1I1m9gxOUmqu35N5FXvUVVgdp2pdzB36IIqheRdqKoFGT3G+Jz8zZA258rBLMUtMeXvDZqHfiZdqXU6Hjym5ctv8UFSB/x+aiUaIG34fTnWdxXLhQA6AAyDVRn0n8qzIDXdzVQlWIF35IgJrnfpMqg5NAZgPuHYzfpFxX91WCdWaULMA8N46pMA+mYM3CwydwHVZgaNSk1WfBw9ekwRb8D4gqwvxTyxL850W5d+b2dSw3ZlKpQkiI5L1Um9FCSkcuiTvxyFQuUssHyHB4TK5O3B9ZfaXfdx5w0KD6keUw7/+MigrNmf0Y5q4nqkjZ2AD5OVQJsOKb/uGipn72fKod++itgSTP2sBuXJ2YPQ04dlPUcVXD9HGw4lIWd3hJfOk//tUhU/Hxm0JMG6JC5dn/c57FggXDj/zWB4iqGAYIKs3ate00HkDk2MBRVIf770Y0RC3H6evge13cAVwRkAEqModvy2LTAqt37YdfTcVdd2kKNXSWcFFRfPV7x8RgXs0uojooxgG7HuorMeuQC/reoIpUHcooqhEHEGBqmq2orFyVZJ184EcpBtQ8GtRQnrYaEY169Hfii4vs/jE2oKBqnxytrnrHzX/GwD24omxZQgzEIv3CB3anXAuX5a4UlYi1w/vO4spw8y7g0pl65NxHUvqwW/3gnIucEeVjjmYVZvRrjpD7LXP4EMZsqmygZp3fuhExkMWc5adu1gGmkzl7hFyHadP6KHjz7TB1dsYEovSyDl7IT41e2j2++ddx7yC9dhD3W+GfJgyIO2jWd/PN5Fq0rgrQ7T0tuUx56vZmRcvGL1NDsx2LoIZipVDfKP5CmVoraD93e/+5g4dHX8ynblK+kUrTjWfodzP+ThKI1+4gOf7u3PS1QQ2L9Bff2jTW+HG6nf/cva4AmJZfwtVBpr6if4P115LrZC69fHbPpefYe+VSQakIUB4uqrH/dTy5v7J2T0cALxG1cj+Z6z/LtjHVIcf/+C3K5Q6Cf3xvrqJgK0PU8u4Rg+rRz8EP2dRY8D1bPU5pIIwNIIhqtPSlvfRb/ABB3a3v+zPcR63G98AnkVWdde3NuyK32XSO/P/9D6q9iz2oumDVLIvWgBMzdznXyXnXTJRSwsbUV0U82vo7+jvr5N0l5uXzck2s8VVrLhfqG7FtmAXvoI5F+o+gh+IlVIXYzEFqqSbBMwMu8RUuqHFk/xBJ9KX5s2tyPxXpBwlKju8m1yTrmRl8wFa/cM9i9CasGuT4JlIP4NVWJTAydHpMrkxetIng2oBT81/dqhVnVyrol31/r9xHOXY9LpWk1rPUNcc30pjyJH07N0jj7ydTvXVtPdEDc2BMrkCsXLnrhqihEhB1UB7egPojeHTUuUYqFvw4Qa9VXfGDZyL3TxFf8KeJjn83Gq5F1sntSqxfhvpj7jpgwUZUg6z/SlIP4MYlqm1MH72IqzMLqas1nz4Nfh1TYzN2BvXIHEu4EmjynW5Fv1jvD9NR+mvnWrT8AYLEsnvoz0RKvNlONUD/QKKHgo+Sq8jpsev76vEwoFpAq0+C5ReiVoX+8jy9vxBU7Zj2EdOnYtYsq1Pw4KVwDQr/xxQJEkuFa+bMZZMInqCI6pyuPU30AvGHVGqm0aSWwuzI4TpE33wDps5O783Ru0QN2HYB9QcUptvgfwtXluPECgLAtC4StcrByX2AWLgRUX2OZxuip4lvrQa2cq4OYuNQi3OFqON4f4jhj0VRp8wLM6nQVRkI3k1fJizUlZJ+ozKj4+8kKBXPHneNnNPoL5zDkHg3tRD/SOpN8B6SK5nN77XClZnD44kG9bwL90PiXePhGgX+RaKCyh8iQyBw3czoSy0mvu6paQTqkW0FL3wGQcfpyx/77SEC1QM//y46bqWogdPVZ4hePXiTKsVInChEDS9Z5Jo8SO6H4LecqXPjyG76eDEWJBhDro8xOf7HbCYoVv3G++4CyOAJCQm4Hh/7f0Jlwae+uqgJkGULyahHRpnT3z+bcNl06lhoZ6LHYsYxXMnaRdeuU8cFYVLUI9OPwYZrdo2i0J8TfTQOAszxvYTqYGwF7a/+7BCawJKvnrOpsWpxYw69vfDKs0/tyDpGl1NWb1m05ZE5s4YptXDuoE6GBBbPTiXRcUdBrsOHiJ6N3KTaxqxXD+LKxMahFpcu16M/E9/sgjr5xj/Tz80y4NV/ecXuncEGFLTnE0f2vPi302R6OWv6jI3Eo7MLdffchfGdZ27S0zlT7ls2unrjxqFFs6jy8smn10llhf7m31I4l0WbemCd/xt6HryEK1Ce/hCJOs5bBMdewXVQP4ip76XWOf4Y9U/BMUTHed/9tTkERp3cJpDomE8f27lrT95/rqCXCjKmwpAhdxXCmdIZLF9SeMqjw1ng2Dq7KNGO8+PP3FY6efQmXUb+0q+7eyFd5zaXqCRT/A/UsxSnqXgKl2sglt6LJGrZ6ofgURx1Ep9G6hvn/F9Em+Drf3A6FV5uNc8cHH7tpbzj2MmC9pDtCYFAEGBNRIBNly5plxDkggmq4bJxOgp3Apr3bL331tr7xxlaP2w3Z7ZN9PtjCepV8F+5GhU8jysDj1FTce881Afvp0g1KuJjI1JfGJsUF3AbZvVDcx+JKQ+OnNrbfHBabovrLxWQXjo+dHvHaOPyBcpDYBsBSN05089SiVJbYUqd5DZnTI/vblLMeDDw8PapWcWcjUBc+3jjV5tz6HnjnZ8fyRmpTRPKjRMHyVSvrE2A67G0D8TiNyPqrJ8hUaHj9mHcnbFBTgD/8QWXOnSe07h+i1lNt2nsKl0LJWzaDeS2CTc6uLFyOHenPHXrUFYHx87TzdxVunRclGqcHksAarMRQmSDmfA8QGNXqVCMfPOqnftEx1ziNglbxY/Di0RlmLuBRh2glal90ufiVKuvXURUEU2+DLnNYCRRXty88NK//THdKjA2BJmOgawAGWew6XpaAq2ekdH4qjXjARQLH3QZ6YFhdwepSde+Lbp14+LRMjdPvRQlfv5Cw7hx/ETDwFUmHAYFyIAM5Dab9iAj96h0ZObn/umTz1wBN6aVdKsT/ylOFnJl2KTxQ7gOov7B75GjPlGs/DaCamd9WyG1dT59e+f4+eeah165dhqSuigXGAkkwNl0v7hRTN3UoLV2VcvDW0YMy0aob3ZXifqePx+Ad1xJhufPJ6cDp5Lj0g0mHgIQZDCmyqB0ygPgKVuGsvLI9inO0zcpHd/30oIZcOi4q5POEnkv9VTtgvvPEtSIr9zqCsTIJ/7JWYNB40fzhZ1+9vLoy2PnKFdkJiokgILOkacvy80tM0aXbLGHNw7loXn00rmDulAPRNeemDu5U6ikl9evRW68erSRGyd3hBvHDjQojo0K03XIAmzAE0NSEj1cJF2+BaAL/1eVWVf+HfOfY+EauFU78XXOqT4qhn+4YaqY+U0/96Pf3zyyt2GN7xsfHadUQhibzhLC2JSnKa37FoxuXHZ7/X23566yptGtLWxAbZIBMZjdJrvEJRI4mOg1qdh3K2Lna424+lyhfOBGyrfoNkCAMSorV7SpxEYZIOSM/BMnI1eU9dGDajVOXlRRZKRKPP2+2uX4JKP6AH9CqqCHyYKM6SyEyDblcxrTNuT7NoxuWjx+z5wi0TlbbgtA3PndZrcJnOg+g4/eTK3nbzRuP32zefZAcD7TWVaAwW09FGDa5X94oiUJ1Ksive1hBzO+98h9tNtGQr3JsQrVzA/MR9Q3a/+h1KomUkpgWTaYzkICZ4yBobunbIkN9+bN04YW0mU2yBKI17Vus5EBBRMcPaPYc3bo+tOjQ8f3D106R7eRUgIb3KlbfcYPrRHt2WVSmzpYxUYy0Fi6bvVjD025u0lpNkhoIlyl9u8mpxpZP0H9JWEypc2pq9g8f83yWNOcQbmxEQjE63IDBgwEiC59qXnmcPPGM+Ojz40WB8dNl4HA2N0wZd7Khe/fdl8wQve5xNbh70R0ntFcO3XLvAdWL282KM1GSGXWjRdx3d5lVCM85+F5L6GaCImMaR8ZuXvJ3evmbTKdMwYh8QbTRjYIgs4tWxS/9OM/+607mkdPNi8XdBQBBmPaZwlvnDs25xFRzL/feEazBPiHT+2gIJvSmfdNfXj61lmrZs8S7bYR5PRXR5VrtmgBoqa2Fdh/tkqVCQmyKZ07e+P0LfMeWDxnNuXZICHurK6JBkHXBrtNQbcXLwwdeiU9eyG9fMkn6FIJ4RbdTllqtZavaknFjMfy09f/rUO7kCCb0sVT77/7oXkPLJgznY7vJKj5w2PU0rYCuLr/x99KtUKioDQWLFpz95Y5KxfOodRkhBCD3CV2B3VyqomzunEnqUy169ZgMCgsOl67PfZyMfrU2Pjzo9ePRYuODQkKQ6aGEiKb0mlTli9evnr+puy/PHAW1e0BHBXZBQrg1jMfPfdf+wH1TJGC0mn3LN60YPU9C+4aod02QmLQGtltbpPaVNLT4ka4DjOo1hZgl6hNMqAadG+DEQQdR331UPPAocbz5xsHrnCDjgmpzWAjci86SsJkSqeQR+nDIkSFzoWVElw5+eLTT328ACJELxUp0T511sq1m+5ZvWAepc4gicFpwICBEL28dEu4ceJwMri592DTZWnva4065A2LW+pUbF42LkCtFfe0BMQiel20qU1tqqpLQ25T0NF69cbY88WZF5oX9qQLt+kyhEFSr8qFBNkQKuon0WPbhABOvbTv+UO0J2x6qEgJDHcte2TrspnjlGYjJAahAbtEwURvv2Iap3cFbuw53DTsvpRMXLnOYJ02O4Pc3DglS+NLtmRRzN0MKuYvbJtwdgcJUAVdGowhROd8unH0lcaz55sfPz904YxMx9QWUm86CkwfPn8TT8w2CeD00Zd377xFe6SQmbgiBe2rH1738Lxx2rORRN/bYBAE3d52XD3sGH3uZmjH6Yau7ze6Nc7EwyVSF66JurPLlOnpDFBr6bJCeeTREReztgVuPjBkNEL3GTAgkHrVpTEYwkHH0dvN08eaO07nZ0avHYqbdAwQBveiX5/9T+WubBwC8tEDOz/20msFQMKmh0pJAM3VX/CT/3yF9myJJPrWYDCELDoXF6V9F5OfOz986cWcrh0DZ7pPBlRil5jBqjKpzICymWgCN1e0PTQnF4u2GK+eX+RZw3Rr4QwIEGhi3RpsBEHHzPWjjcMHRy4+61XzptFZRAKDwX3V+vJbcomdixwAt/bvfvmpPecBQtgtJq6UBDBj21f/9v+97PZMkERfGuy2RLdnrw6d2Jf0wqmRE/sTJ8eZYOpgt5k7stqkTs70cP50t5avLIoF22gtXO88awETdC4LQBPp0mC3Jbo8e/yF3x8+9ULz0LGhc3SdSmzA9Qu+r5VDQND+yivPPXNo/01Akm16qETOGRZv2L51YQHgTERQfxuDCDrmYvSQbz7XihdPD+0/37w+SpeCAAwYcIfXlWpTmwAbMF3PpViwysWMR5vj960u8owVeIhuM2CQjNRVlwZjIBDl41ebr7yWnj83cmTf8NnXGqN0G4AAW22W3UGozRK2u5A+3ZRfOLxv586dZw2EbNNLRRLA4g2Pbl9Ie7YUQa2NwUii46XG0VPDe46k56+MHXTRonOAwIDN63IJS4Ah0/UwefpKtdasGGs+OqM1tHYkpxl0a7BBgACVdG1jEEHn241zx4eP7xq68cxo8/SRpGstJq4OpvvUmFFmPvevin2HmrlxYs+pUYCQbXopyRlY/K5Hty+ivUBKorbGlgnR8frF2Hn9xMdHTu1unL5Kl6nEBvNGUoBUlk33Wt4spmwZHp+xvTm+bFXLc6czwaJNWAJEtwa7LUS3V0+r8crBlM4/hxun9yW3xfmbHVgiEs2Yuqlx7dQUz7+nLNN1yMb0VEEBTH/ku/7+FQMUSA1qamxEUF7o6OjJ3cMfP/na8cYZOsohDAaXvMEVIBCQTffNeblYvrxorVs11nx4WtG8b8hB99kCl0iUCoMtAyGLrscvCBs3jr7WcEMe0oyNqbjGifN78sun9l+8TbcBarNNjxXOwJoH3/fwmgAKJFFHGyOJ0tHi3CutZ8YOHmruvz6aKQ8ExpZ5oy5LgABDptvhRm6uHi6mPjKceXh+ke9ZUpCm0MMs07UBGyQSEz9xxh+9duPZfOz8dcrVRdUhZ1j48KPbt88CCiRRtTEmRPml8TNHLjzPjitXTtI5Wdhg/rtRgARYznQd9qIF2cNbpuQYX3P/uGDt3EKQZ0+h95dvyW6cPBz46UuN8RevN09epnPINnUNZcOCNz/x+H2AsySqNTYkykdfvfnxm89c23PlxhU6JjAG89+hAgRqy6aHc6ca1Fp+X0s9230pmbh8je5DGGPqq8iGFZufePw+cCZEhTZGEqW3Dt3aeW7f8dv7xm9QKgljMP9tK0CA2uw2U1sBARgMpt6KILPqnU8sBpwV9NoYS6L08tiemy9c3Pfa8RsFpYGwMf8tLblNqsAGZNO/kYAFn/D5KwBnBT01NgpKr184v+/yczdfuv1apjQENmYyVxEw8uZfPwJkRwQTNrYI2n3tlesfP/HSyWOjNyiVZIyZ9I0EPPCBF8dt50iiextLon30+sEzL9x48dyR1jjtgTA2k8MREO/9wwuGQkG3NiZE+43LB049f2XPmRNjlIawMZPIEXDXV32osAskOtomRPv48XO7Xtl9/PjFgnYFxphJ5hCs+qmTtlvZtNtYQfvt0yf3vrLz1KHrY7SHMDaT0SHY/pNn7aKVXUqI9ovn9r20e9+506Y9hI2ZrA7B2/9qzC4kbBLtN8+8uvvFU3suX6I9hI2ZzI6At//luD0+LgXtl4/tOv7y/mPXWgAKbMxktxJs+stRF+O2oTh3aNehA/uP36Y9hG0mxQPu+7Hzbr915B/37D5+4FQBoMDGTKLP/MA1+9Luf/2pL9o2l9IQtplcV+Mt/7DnL7/tk9dOozRSCDMJ71lPPDKV0pRCYtIeAFZQOCCWcgAAEBMBnQEqCALHAD4xFIhCoiEhF3t1gCADBLM3fjYMmmABl029/mPyA8MSuvZP65+xH9s/Y/5bav/X/7Z/ef7//c/2i+UP9261et/oz967zL9K/1v97/y//X/yH/////3B/w3/D/vP92/0fyN/M/+s/Ob6Af1A/039s/0v/f/wnxKfsb7nP71/rf+h7Av5h/V/9r/c/3n+WT/L/9//G+47+of4L/qf6r/K///6AP5l/aP+r+evzN/6r/1+4v/Yf9r/6PcE/mP98/4ns2/7P/zf6L/if9v6Jv2h/83+j/2H/7+gn+b/2z/t/nd/w/oA/5f//9gD/Z//r3Mv4B+8/un9Hf4b+Inui7s/rv5Hf2//seqf4t8x/cv7h/mv83/df/j/wvrd+ssWfqP8F/zP8n6o/yH7Yfhv75/l/+p/d/3f+Sv9V+afnn+afv//I9Qj8c/nH+N/uv7ff3f92PqO+5/5/cZ7D/nf+z/o/YL9jPoH+N/uH+P/6H+M/d32TP8//B+qv6F/dv+L/jfyC+wH+S/zj/K/3z93/8Z////T90f6z/Z+MJ99/037IfAH/If6l/p/7z/qv+z/lv///1/xd/ov+p/qP9X/4P9b///f7+bf4//of5X/Z//X/V///8B/5D/Qf9D/cP8p/4P8T////Z93H/u9wX7n//f3Iv1T/2/5ufv+3/MYxjGMYxjGMYxjGMYxgovslGT0wVYzt7OsuN6iCdP/8xCxbR0oST0szKtp1ndShMGhf2Sap7WH/eqQlMQhCEIQhCEIQhCEIQhCCEd2mKn00jCq72VYAr2FQ8LFzWiDmGQxK/P/Fk0JZJhTOqNoO2r1ehlB0rcpIhuXeJyoU50CtJyYG5vR1znOb6sJQWta1rWta1rMnHUrta/liRNnmjASjTSE5qOlacQwCuBicMZ5gjrSRLTP0czYKp35OCLxd7vg8s578GavF2k13Mmv9us6KFGv73qzNG4sn1T6EcSH0fW28GfbGKtFm5N+uCew7D3Oc3z0h1w6BlcXze9HQAfwLqEsxNgxYaH/oEF1j5yFXfPKjdUdDgNlYJy64ZPIxi0kO0CaM92mNHaMHyjJFRFLWNM13/svGh9wb7ARnmcaFvcevGTHroEqCbVherCibZWNUsrQxdUaeHQGln5S4FCtk4gD6ipbud+bR7RK08Dfkc3QKCJjvabb+vNH48dRmL9gVvLK4ieMOdRzEFqvR/ZOyeFX+YwIO50R8kGLY2L2Ku0kC2y2Zz1W27y0XK1VmfQg3MXfqkxiS8flR2jveat1cGyDrq05B94PohDZaRgbEouXmyHBdhdayqvvEB25UcD04crHIAFSOaiMd4DqtZWKTo/u+ig/FuzTntSj9s1+rXJFXR0HrH1DqNuEtImc5YLMhz0F1acDcnvwxOzj+ZNEvBP21lmAKJiRVAsGRF4bd+3Sl8gyLcMGQB5avudI0IgC5BkJqOZLFzq7Va5KUcbCAFJUDVCkOuf31wrdx7T+BYXJ3YGCuEzEUdxNFk63IhH/cYwVfilrCzNMyRpRxXEyp5d1L8/QVTaY62fMvyHlpqFJnt/p3TTha+Lw9jG1CPWsW5V4aag3aYpJ4R/LNvxb//msAn49IN+sqFcnmR9n7O/sSiMmjgp6x2Pi0sJNeibT9sM0a6DUYUJLz6DsXgrbKbHArMfK6cO2/8vX9qtO0yqxo0Jr0JSyQcPJv54rN8fizeMrWFqKTHjabtBqukuvh+6c5zb6oxpb3BoJzkPLmpBXzMOMiSoY0b9VUQXJ9S089HZtKPooTGWFRrdQ3mQfTvxw2B0CKQDjdxvxx6r4oS1qZ0x/rdN0xGfphJlsIgwDkKS3YmYorIXab715EvqZDFaWvPSu7zl295BBIJbmwiK+9s4ih7DXrvjq/8POCIZ1v43fB5oEPRcbSUfSjuM1F/oI14XyP8a2LwMsd37aqUqq7dBDVcooPUvW03sgH/2MgTwNxVlBma+MbP5iqP6qKAMpsvQnPA6tHld87VhCApERZPIAKPYOTXjyNZWiEYvFe/ZWoKxv/ish+r5CiT7JnA6lNdGKGw+K5Ecvx2uZO6mSXrqKvJIVfzw7tsunE3aVzWd9SAuzzaWLMuRAev0eI4HP93pFu4Pu/Ps4yOMmpNRXi35rCiKl2POWWzdvyfW2jOWRf+p/BQlaB291tpN94whAshWzfpS1zJziLT26cnd5H1pl6I4rcmU0aKdVGcmkEt04602+ccI5K+Fu3kXHIlAJb9zqRoNz0WhCNws4nm5WxJZ/9V0I195KqdqqhNryAncdoPYkmtpg/ado9mz/q/Up2yK01S6rECSfMXgQAlGJBmj7bxKgjwd1qZR67VCG5T+uPe6In5jip8h36PoTs/uQasS/pw81lF8u8MECb4ev85BhPgAZONMfKT/sfB7nF+r5ATE4eDitmivM16I2LkQ0CIUWv77tv0Ezs/4G+FxyKV66/aQRl2tl4cCcJ2NJVOObxQVBv1BYSFOx4eGAK55HyrBwyNWYDVVQyb3r3bkqzuGiuI8b4ll5C/RhUpcCs9+qf+/h4SOm1OO/bT6r7cS0DlWPh7ed6cHvcrmvu4/E5b+ISC3kGiS5/fbDtA6+YCPNLvcvHK6fPbVSQs8cKpFG4PR5Pnh7GWJALyVsEFHDdS3zSTtux0kbZ8O+PycM20UOgknZPqh47SFuDeShz6BjEEjia7XVzL6D9oepEX4KOO1YU+oD1KtYUfBxvHcj40Tp7Z8aoP3COJ+92jL7IvVoi7AqKH59cYfgDYu0avvMSRuyQ+K8bGeFcPZb5GPGY70vw6p4Q5m8eU9QqwhOnP1y+o5VXLye02bTB8vcL9KrxY+pUn4bkJ5leW1fri29XhpDaNqv07Hg8GenO8rXIovev0Zvqn9X/RLI76oYNX5O8a+U6H8c742GHGghCEIQhCEIQhCEIQqDDEUQIAD+/x94AAAauRQg+6X7tvIcE8MVPjszMU9ziq7z3PbhBGkpECe8oOj0hjhW3NHIOc3R4ydreoM99QN1dOlmAddEILdMm/9DQDauorSLMr0rk7EObAAcg9hReNTfTycy9OUznAsl4QFaRI4pDozVC+oLNWuWieEtIRAgZs2/HhQxMrOWL1Sx/7eGlOOMo8J4SX716EE7ygHA8y2eQNQznMCjB1qORiqoUW3dVUOUNMMgAWifASgy67rhIfXmosrptqHhHslhihbg8li9mfzDqnGEk8P/yyWuUWJON9mI95VOkjUrYpHFK5kWqb6YpUcQtQobcgHUsL8VX96hhV18tncIWOVGtJpxoeViip4HIOJugUp6MKTY2zAZENYgDif5UBpaPd5Ee76cyK1vbCLEz9iFdo21OH0Veo7b8WYXhKU0b+6LXO6B1MYMf3lHV6njHSPzYUB45PIfHxyth67N2xWzwT7c9d0i/qkZHVOBZ6Wcnv5aaNUY4eKk63I+17xfBBSIPkiE7nAocX5CPxxegKa1yxw+/AMFwgyoF/EomYhtVRZnPBsd4BuZkH4AlJ82SckPfugrpih8So07iV7gUhk2tIQdrV0QKZY1nRfXFKY4V5Ys3M0ZOIfWm/+oX/QVDX6HQQrZCwYngRCFB8q1gHL77/pF8oZ2G/qr2Nco9BBoAZxQAAkpPrOF8C/y7mbKXs9Wkfz2WvXMD9MEFIb7KqL4mMM16JcH/n4Hinpxv/qZ9U/ohWhkL+G7F6WczifYdjnxj7X/NaOsjFBvM+8OVvzF4jETFCqJ2dDGkjqihBcCR88JgSDtYHeRr515ap/f4zPMGmCk4SnjXnriDdvvEC74lJznpyvkwmFM8rIzrrgXPx5Rm8GrItoYZtQCo1J8baY4PGqCacBa9BoPiaJCXpIfktKTkmPpvxV6mMeGxbp1m+YhrPwQNGaEQ6LBxpwoswQjV1cgUeHGQ5OkLngOnz4E2pkMXQwcUICeSQZ8Hba48H2p1zw5TdirCHp+1qAmDV4LhxdUEm4GbE7tz/NwtCNfdIRUnyJiWe0ipSNrU8hmnSGf5LB/3vBQdkHN33AAABGu+f3dGNzicpMyvIl7TTmg0j+b0W/AySPfzu+ru9mwCP1KSP5QAc4q18SH7EoiJnD3BzR9c/oAEkUurx1iHnV5eu1C5wwDbvdPDhuTQhZY04mSY0KAZs4mXC0Crr+v3zj12KgKyCR6DHfQoi/rVwbMU6H4lv8QBYTyDzavIvnCevCdg9OxPYv57On97GbsGLszw5vI7Mj0uASnSictGvb0YrIzkvg+09hfq19lKv+bxqgyUxFfRWiGfh1COrMGeJiWkDMidyUEIvnJH8I0kzp9vf076ahA9JtliXDy9eKW/+YqQUHkJ2kfaRBuJRIhyUZNHGk4mOQMvTuSfGN30mRy2rEVck1pCSp5cZ4t6r6BzFT3Artzc174wQk4TOY/x6NW7yi0IxRHSyzjdtT9ko3cAXDUTobDTT2lSv8FxA+Jw4UQm2awuW3P0GtWL3N2oAFMQyB+9KHCJJCGN/QUa8r66gPWfGmSZOyxMGxLcfxyEgq88Z2dy1gJLW+4nxAWk+uyfM0uBwBGrf0dozLTBPzZerg+sqqW7UWmOvs7NlnZ1K2dZ+Cb+ceDMTSSpSfHvnXK7zoHVbBbCENqyQStTd6GqOe3lOzA0fYpRRcZUALMIP73xseLf1336Qo8tTzmO6YYkAaMetkbsHb0bi6Rv5Xz2lHuUBZ+jQaslcVvUawQ4FXUaJp2+kth+ywy1knFmKIQB5jBv3hzHu4C7QvssgrdXFz6zweuEWgL9EJNlkprP2csreHTwS4hZ+lj3i0lI1DHQh0CNdZ6A0EN86B+XzEiXbr8Bec4R6pQbaEiff5iI8KeRZ3upbnn/mTNzY8gCmznoywnI7BBeuJcqIH01szmEyQx3jH9IwHz50zNnfFjtsh60OkyytnbzDqYurCLA/kf5UeeUSqAHWSNvKYqTuuwYaFNtQt7mOIjq01FyEKtTYJTSZjLw7fLjF8RYXi26rY55zmncQ/PolS6BsfqxTLwrmYr0pMX8Dr3FFqzP+VLsh4MUnnw/3VVPA/MW5Y2/NAaj+Exbr6tHQ+M/HTA3RR4eT3Ui3YPS+vQ9+FY87vRn2lKkqzUVrkq9v5aejyLcyRjiIppv31nX5t/RvKAM/uTDsDC0j7k4NsahR8xaodXJwEQroNt4V26XijhULgU7h+gXyW9F77p6jtDMqOaTn8KCUWSX7WGNFT3AU2JPzU1Qg54ti1qu3X7QOveUGAywXAI6rqoU8tUoEq8Kb5ijDthuubFC6LvS7Cw3gQPqJxmGLTbN/tOEvf2XP1hn61j7P/ybilpInW29BQMT5jTukV6I4PJMoiCnYgFhQw9kcERDQOFQg0S+3uLNdQsc3/S3IB9zIwck/2/AylA4QGaEqz9OfrKsq0Hi/CfXUulFS0wAT336LuHmx1K3r2JmtssC/istKkQKnZstinqffWK0mfkzXWp+4lxQyhht4AhpDBM5EdaLJMhGRqBX2Qqzqf4BPff7vj9qodxohlBpka/ezuh9qHafoIS4jNQAizxWyNDimRQCukUkzziU693HOevAANj+bGNpqTQ6LVGk/HXQH+SW2dhlc11At/NXFajfTy6GJXBddfXofEOUBgUxXcds7et2TJjRu9pHbAXWsPm1YPrjW/xvWVqV521xk7C6f3iE2MRM0lFxGDl+OKiMPS2V/GkeWL/EAAxCwI0h9NvL/aKVEDBdZEbrDSvzj1Y4H0CXUlaM8y0c4uyTat7JiFvokHrMegYOF2wHgy8qU6/FN22IK5EYNxiYw7qUlwn/Z9Jw7StUapcLeXEIXr54/i0dPWKW6kcUYCxDg9PbcZeReTQR2B7hkI8+H7QuqiVWTzouOj60O5r4qacZ8mCq+BR2WO30GIT5y0lzFDjfgs+3JcC6VsV2CLYoJmGSnBDWBrUxCFEEK1vOpIIOM46RFW91JlcsdpUP48nw0C6ItGKdp4v76McWlTsNfX3iiBx1Emn7Ykpcx3h4GI6t9xRzvxGBVqu/OsUFCLzvzIVBw5WMcnrZuncn6v/i+Tl9RJmJqwI3uq+mJXtjTSYHtPXqZlQm2apdgmwSt5uvhHbIpKetVmXSsGM7zWl364XgNToSI+4quHUYYuxXAO+wPciBCDLH/teYzO8x+PJbYz84ZjmBPtjvbgoQk2nBM/yEjzLHHaREak7LhTOT9ApThflW05gVktvVKZquaNYNKYUW82tqI8/9lFyM7hqdKm5yZMUQx8Zg92T3TiennUx8hAsHtNTu6lsODUA0ksRXV7hAA0gI825uOYdbGHLIeDec7AQ+jK8BV64L2KfX89eVfY1KHoGOcxzd9sAS92LqR9IpvjdgNJiefsNbFxcg+XAudidqGPf/nOF/D1P9iZIaPywb/aSMnhRnK91pF0qUTTD5Ol9VxtaFmH67lAYBwiNjU+8vDIr0jurn2oCFDD7GazmboR4clZHx8fdzPTafEOvonvJYI/s4LIytv8yOvNrTTDsq1HOxa6Dzm0SZsUAHcrj0QWb1xt01qvSa3+GnqJegOAUX8hqHMNDrx5UjsZEibY5gYzWHhQj390T9X3NZ9xfz7XGLPvC51iDCg2ucJb3a31tb90Jtjt7SBSerQiW1dnbm5sHNlmpRxYs6dE7UxZ6QHZTccolNJlIP2hgJhmbwOW1IXRUCM69dtoyvv8jUu8n1mhW9vQ0oRZBwWp3A2gYketmj0XDlNa2Fa4p50ZVElilCL/5DrDxYRXUppgkto31Tk9Eea7OJ21kaKAABabetDOqLaaI/Yn5Gy5JruwD4hIYLyFSnx3mzib9CtJ9fUbtcl3cOO7G0e9kO/1SlKjNorpm+8qRbuNs7TTWoP059L1b7T4v1FfywSyG34H0RbskVQWc3HK4ALpEqfUQDuRryNcUYvf9VYxufnerxA+nP6OfaxeXP2MoFBeMtPiTfQI/KDM940EFudC5c6nSc1ZSD5Q++koVK1M3ZwiurFfZIr1P7l/e7CG9JzAenlY+LJstgJFm20bTBSjN7O3mtdl8jiuZFRFHVKsHs4/RR534UCTZsHyjL6d2TMR7KJ3dBEwsFjOhdPpJeh4giRYiRIdmuMywev1t7DTd6bmNlZ2Jraio23XU9CmiuR73b8y34o+WPMjWSbRrEYwdswnsLnhmAO9EwL8Wre+pzULC37wnQlfZPQV3th7H8XJlmwPB7Pd1B2O+EhwLKb1shrGwdA9jcc/Df8JAuAF02hDfB/26opkkpfWW8u+25xFxdoIwbhwMaU5DkNaMrMVlntuH7ULVM2+ocqnzVOZmtlMoxsTDCcySc6yCeub/O1LMe+5HTpsaWOzFpdzhOahJoF25qLr/FjabKZpc3JqLJ2507wWGvp9MA0vrEoEtXKVl8AQCzRtin5YnHEMdiI2cqxVhabOIidlXc1FI+n2jW+h7W4Veiv2rY75Va/CqaD8HfXYX1uY1G7JHkqg2ncGDWefLC3eQ6g6W+W2lE/RaKZwJXM0bd0jk8gFhZdxjtxVFyaGXFCnWSGAlRh0x1QFxMqy+YXKU33qwEn5B6BKFCFW2Az6N7F8oC0qT2JGmxWAamswXLRaFNc6AIvfpGYobtbY0KVyIw84T3aQHSZsoH9Z92JRPbxHB552iDNMiGfpHBb++EddEtEGp1DGTlt3VKctsoVAu0od70m0fcbmsRZYpRdFly3DU1d2dtfwkvPSXvqlto/ztqHGRYlJawlL0dLXTMF01/2tqsnJOUhwQ5JeJSr4/LiGvqUUgtAbrmtdaECsdpO2QgyGxW63OL7TYBlwO+KhuNMqcJmRvh10f6ObaaFc57SZq693LZ2CVE/EZghv1TjpUYB3ZlKwER9olA3OROhRZNM78eHoRRIdYGRu4RlW9uR3Tdzdb2ShjK1TUBNqrXAUAbCZ1BzHGuF68qSYTkiHeqJ3xF4VY5oUE0f/Y8tzue2pombCIZVex+q4mdRqkdeJ0YC3CT/e28+2vtnr6kXz41Jm603SbNQqVk1tE2K1L19f/8F8HCOv/g0SrdErVnkWXjkIpvBu0aIo8AVi+2qVeR4Ssg5/1MlFkUtM541vf9pL3Ge7ENuvgJYBgdzgKiHj44vHd9D3kC9ydvaTWMScCitQQr6/SAXCN4PPFLw/2F0VP2/Ig7iNc7huy9UOj+pqqD9UT8y58EGFZE3yr+nHKvtZXNuefwmY1PyrrTy6XN6xeI2V2ZxAOQHSwdSTtbLFXtBS77PUCXMCnBpWxvAzwh/PXX5DZ1YNrSLpiWhzeo3zrajKbQARKG57Zffacp6+2kTd/kK+VgqiGkbrTl2gqDua6pzmksHRbOifWQniVRDSj0bZ/04/0nZrBP4rxNrFuX5GXmq71qiwSGIPq29lInHKoloGUIpPs1mCj/C+9LcFRrGiZiS97r3wTztNVEYluHlOWiLE0S/mmhPzDAUbfIqr7EiEG5R2SJQH9BVdCl19OqBpOLT0d4PT1/VacfEVenfZhgoML+WzHxbZyiW130RB2cJVYuOJZVc9TxxRylCr2CgMD7pGc5R4Y8z7GobQ3NYSdu/oVzaheDZQpfZ00jm0y+giPZnm8+gGH5leJ7lX067MmWqv3rkHVrTtNlPa1E8zAEDgurz4Nz1ulkyo2uqYeQ3j8nNZAJ2aC/9YWP//+Usv+Wf7/fb/b+k/MR9VWdG1TCu2I603TRnOt/62arBU05oweXVLiPs//lNb20YK+T5y/gnvHx7tkCDFt82LTRLFlJ7/P/qQ/XgiFXPMDSth3j29Mwld22oSQierU45QiJmc6u8U1oIkcGOVAsSQl4JC6FebbcOVduF1XLUQ7iFmCX+qmV394w5Fc/Med01ZVBBSRZgLJI7JI/1SNn8o8FY/c0+yzHkyCKuxs75hTySojJib3MsaYagsmSw2SMumLb3D1gatn7OSZ81JUWCMWZgOXj8eyTwsIRoEWBRObd6n8/NVWbJR4TPTdFZ8/kUh+Da2M/k5OU9BR2mjbggbi7OLu/ERniXetnYk7qrX0Y28rJiof4hjp9YSF/TFDBGfyO8vfQXqP54LJiHuoZyKfmh/xJKRvuHUXmHZ8VLjm+UMJtZvOtmg9aCtZuITxaDZ+EcnEPa3lv22UwL7LbvwH9EiGlouLchNHgkB5kFvfKuNDd5CFiZlnPzPdjgI3cVQUpTmfzfKmlMPQxggs7EAW8hfunYmH2gFYPI21jBlfeiqpKYvwTKZKkazMPFmPnWvfHgnIK+oXbZ1C+ezgvBsHcOvHLJh22lRsa9NlwE2bFjTg8E8PTjEK3GbrBnhPvpmv8SdeVWRlILxyyhM07pio3+bxyxxaXfqZ340hiLdR69r3Wgsi9Piqv/IVlXumCYxaqTaSAWWkJYfuJQuquZVTtHEqlisluv5ydyYsg1xZRsNQ3D74xNZGZQSCiWkZ4QkxOj/JH5eLtlqaNLzUz+WHoi/euz9uSYGubMdlT701U4V1J1JBygdHpySSBSFgo8w8WB/SgdO8DoUD5D59D2RwSOp8F5wY//NpmPOoqTwmVrTH9yA6wWVmA8xhKNh/shKBkxVFCIgXRnwDpeMZwt/w7NVuKUA+6QxvIaHUWsUcytJbAAXw4/XGoggBtFIv/5VY9NnkgO3nHNaTm0lMEatYjspAV90QElmBMnvrwWiKPhk5OHbIjHMhIGvJAq9JSY+0KbExRLzATR/EWt5w95Sn4s+h1oql+gc5CnmSEQ1vqwKQSlBl0aFjNydB6NPR8NSKRZkKcJLio6zvyl0Y/0dqCisKXKM6BxeKIrqhQM21HyT+rX72v4iCKa2kK27HQ7d8gG+1kSvyg8+ULZiOLi4dL8SlzZj1bn1F5q8dYHS3j8FgUM4RyvT+u+O9C+IQoInhMLc28ia9qFkx7eRoyYwDowmk3FrBS08JeXhWpbuHxTvk4kLxu2kl9mpA72IeR7eK43CDU26w0dEknVBej02nKw57DBxeG8gpAoz5ZYUzz/GI5JzIa/jgnyV2sHH28HlWKr43uCuXVNKQ/Ej6ZsWII7u1wFR1GoAmS3VdHL90wT4+w8tk/osk1SkmcXFTQnf0tNXc2a4xoANYgygUd3GQVeVFCvbZtQip5sVGGdc4oVyRx/HCjd2eRTPmYzNBFIddcvufFdl/7czAF8XCeUcOf9ByCU5NrDB2L1zf0QWsy0Smi6Gl95L63wF5/U89obPM79uOPEy8t8URZ6+te6Rfkmj2kIsqS6sciqB93HP585ieVekJJ2ZElpE4UQWOx41sSU8T/PtmKbUgnwfozsGRf3170ve3i5531crLFqp7LdMlNi2VUYTEMhkhAbh/dCs1fGLRecBZnIb7iEkNNIgTed30Ox1nKtGLcnzHHR0xlwdOv5gYrYd6O6S7l7H7vCscssfXcJnEjFdJPJhsro9kwWWgDpV6hOnr4VJiD6s+nyHizSb3n6SuDTg5TgHsH1O9ObBFmGFJ6hlDR2bROof270q8/PCBo6ilWk+z9LxEQsO60kmpp2AITyMqcGx6lzTu0aCAWNh0nFw0mqi2Erw1px74nAh5pfPi/FjjdzIH1l2J9YA3dFZxZ8dErr+x8D+T8qlSWKsY44dlMf9xKlwsPj9dvPtNhjy/UIwpnq+h0EBLUwe0j9DxsJleH/vZqREfI+15UNLj2b/kGNHLC5IBGB05U4vp5oCgPLEtDfq+AGG1TgvDo1pbPfoCA85QfCafei8RLUvK4epAT+XJyBtHsRyLxAkDLLHUVfZvnnrZe+90yjaWPNQ0H2mk+0k+SCZno83UFnpupbqcoj7jjdhLmRrbTOskvVldDzB60NvbtEAJecvpoqk5eCibst7hBB75iZIM9Dj/6a9xxM8Iw6KjaVj5W1gIS3j7F7eZdRbBk9nySa1h69FT0KPkYq2/HUUddhivSUULDzblBibqLvQWer2eqyPPiTSRaCKpQVx94k0TsEfvM29dnlSgWikWU8Wsnlps5iBUV7W//7hkNIWCU1Go7w5tQPFQQrxcltQERbntXb66b0ZkQMkwss1rHxAKoffwljyIVWFiA00Bekv7ugWouAzzbBT2KsJ5+9pReV5bBC/lOCrLSDke0I70ik6VARgS2yYq8v76rhL1Wld3OewC8VQGEs9Ee7bJ1JjGvwIn0ockOJ4wJMl9+SM0sRQg3ApblDFoixG23zZcCzpIPZWedqfqdi9/4ItIfKNL3erk5j4cIHI3cIPMEKupF+YONLNt2kmRbtg+nOvisNvi3lj1oub52eOawCqum5Mi5rmYxSXyfustzBHjEnhvKcnrYr+wZvcl/UB+YFnzv4REg/y9D+CPXRgLAYAkkH74QEj3f7hOXdtaDD7iu2qn1bgUH0qI54IKQcvoQBU0N95jbqu6YwXPESE49YhaHCHNPcYO0TEJ7urOeXlf54z5pjcZMyRzZT7dKcqh7zlivbr99WWsdfz+DlJrwSELAuYnBSTM43ZPGF6jb8yIZAVeMVujrFUZbtuffkwOSTAetxCrdICp7Ib6/f8fN0D9XbCTxWWnGWUYOWZpoW4zA3ClqoPbjwRbREvmsE+SSlbxC1gSMvwrIWIVve2h2OKMBMbvv/wdsr0AtYhCyzglCDORxFQ0hdH6chXViDGGqo+Y+ypWhbjn6Qfr2jM0oQO3PrBIr1MBEquJG+JX0rjN4yWENMcyVL2UXNPPUom4EDymN31ItUfdKgHTmxtgpL3t4B/G6Rlytsxj/hItyO4az8tyuXwCpx2E8D5/77UNkcSl81T4gJK0MemfKiJ0eB7jZ4A8355NNJp2Dq8ZtLVZxeUWQQNrmVWUvqPMJFpXSdyifT8iki8/7B18EFSA10Zc75MF0VFbURZ/8b57N2uWCiqnI/wEFdS3AbWp6ughEVCHSGhbRHRXpZtZlGsjiFiiY64qjtXwwE3WEI7PkYB1UrCDjMfkvDhMOtkuBS+0j4jfaWr3cGm7BM7uczE1E5GhXgZLrh2/+kX1a5F7DXdxpoKqsiLZ/ic36xfir3M/b5e9UEw3PGLSNe21SxWuXktQ6JvwCJn648Ggy+O24HgN3GPclVV/LPmyRHk1IXkBS9sFevpwaVA2H39OXQEMFRz19MTcl7cDg2ECWC69lnqTwTIcSBwIuIEP3U7JK+a2ofubC7dcbM6CmRM5Uw8D2OX01GZ6QoSbIexqtLRKI4d0bK5/6Hw/CO4dga0cyZ7mmcwn1Rw/3ZTMRk5vl0p2oH5zjYxhtxsADsvc7YgGc2dzdZKV6wEDKLDCRDZZHXaMMtKzTpLpA5Xr7EqX/kyCywqw/YUdOQkjtQzuibnDUKnvd1WEasgfl7zKx1T1u+u5sIfpQNv6Iy81TZiLfq+SVy7ZW6nYhVriZsb+ZoO/FbOKcypbsGnbdmPSopryn+T+g1iFf6S30uiz6Ca3XAVzRaMHIzsH/qkSQhk5FRHOLmJnzrWsEjz2xzyRa6j2uMPzMp1H/bdQIhSFzeYLuTVNJzjN9OyIW7f6Ic9eJMziBxagnASw23iBOjT+aQYUS+T0/RauKas2IeJv2AAcGVUED0UfrxU+RyRgDJUXOl84M4GhNx06p50QmC8B+8303idsG3427sTa859kGhuQuLgcBohOPsfBbTBDOQRxVb0FV10qt3ub5hKUw4naTSfMYa+XiamcNamWeBPbMG2hYppY57Xz7yk5EzpDXAxkY28GPzKQSFp97BHYtSrwacswDoC/Hv7PbKSZgO0YLDGe48dgT0/Vx/eFxaWbrGXhNPQDfmtOKqTAtps5cZHAxWbp+LuJomV/Tix8GSChcteBuEmkfcjix5U8C+GxUATC2PEdLJ4rfdMHH5bV3nd3lsoFyyNX9WGYdkKUF6zTDt3ww9ilCNTnEe/pGIiVY4KnHRr1mHIstRmbw4ircN12UW/XOcO/J5/xb01RyiyUVUw7Qmo/6efbbeJQ8FNN3zMS14WWo0xta5AG6UREtXVBAZbR+mPXUcVWbWY3o2KcU52ws8ODG9Dx3kWsZyq+pS931DAdHP7e3YOgV2p99q1ekGe4D2GEL3WzYEwQwoL06rsiBk3AP1rMHDNL6SS3QVUv5L/cdzqf2a3L0EwEkaKpaT95CMd73BPzUT2xZICx348vb0c2FBW0w7usvRj8eUk1r4SI4VanMYQyjkPZ0PHdS3/tOd5cYbrLmXzqYrfcXfwPBfVcJAtrmtHXyqEGRcLz3WBsdZNxsHdY+P6Y3ES+jvrLJlnRD9REzuPwkZV4UTrav+hs7xdGFgNJ2Jx/Oqxflxwdt2ChA2sKFW1zz3kDSOGN8YZbUQSaf40dXtCrXyma8BJdQv3ZB9SIOUN0QeoVS/pNX+TNm1ZRB71RKpVBRrYzkiY6actlCwpZLpLlU+J97rPjtolVD+CRqWXAix6bebH04rXxJ0g+oLGePY6HJ45zgJZW5laZUl38SIOhGPkRYLwVbS/iVT2DkfZln8d0L2Y98YVQGrg0y5SaxL3GGltoMVGI6fAC/T4+x0B5QSuL2HcH5tLK+LKhoWsTZaTBYYKFUOs3OPlsKSjwDeihl9jhNnIM+FpQ6Mj1esRbs1DZNlrro/9JTC4gAH96EJuy7DsQMzmZjtM+G6dc5muQb5eC/Oc7rBTBvlOZkJ9HVKB1CYbulRoEYjuN6ONI/E65vXpLfV81wQcMOuBPNZgJkIpcZaYK0ccI8FOB/u4c8I7zjxTGB148P/fG3ikdp/nYlz9Brn93Bq623XH23On+z2qwCc3TfmVq/2C/RmI8ntehRJE4OME3fu4mVkME0EZ3HxjKhZCIpuFjJiu8/L8lJA5sJKjuj50rjCeB2UlNUN0Ee+FUX5gaRzAVWI5YTBOMLUD9p73C8Gd0TFI8lcvsVcoMoiewPohAD6wKMN2f5YZGt9WzqXm6eNd/gWuzm5rLhFKGwbqDXZa8F5BIIDH50lEGSyxGstqroERfGt1FRJd5TfnWp9tRNN57O8zi34WBjb91mI9DRLyWqgWuU5lJYYnzsqXSblOO3eL+G6rnnw6hlzgcBwWGd71WZOw6k4OKndR3dczabSZNwesyvw3+GD0jNrMqzXQ/rIkM74whcJ2KMzzZAtzf2tnDc00CDSE5PAzDsLa59b+UzcWJHGSrTtqP//0mF+u2ID8gDa5GLDhFaeldJETl38PRlGkJLemFKmbB4MPgSi1Q73OO1jcsoNjQBt1Hn4Civ6G2uWSDrDoAt/iWWnTLxUqmFWm2pHYAzH8cMbAztfta3uUt03oislCgEfEBo3Xm416eY2mP+sYy8FjCWyNYjwc2aCKJXrmaRt66DmDiH3LqNNuj/waIXoMmpUGcOjvU/4lIChg1mrO62rSOdxFZ4dbzPIsDlZiMF0sNb2sJVcQDuYShCQyIpFegWGPHZV49sMil2Q8/nxipfPpAnDOgstwSlcUn/RvTGA3iiHxFU3pvWk+NDfw5zDtM57f6b5Cb0ODBDFPIVyxplfwTSMnpU7obNScE1e0hQtDAMlq4Obyg/YlyAYJpl58frOTEPttOTaMPw54wfurCdBoAJZ+JdHBktHGdGs3WTRpKv8JrwlRRNTRg9EMTNsCtVw7wAotqEGZ6Tdh1DcCKJQfjkT5DYkhp3gpMGWIFqp0lJbJfsUfkJKBLN9UG7Kv2xgecxl5RzYTH1gVWh8TSgDhSp1KJ/YTuFatj6YjteLQ6CWJiqsHgjoxAXcZc3uhjyqsBriDLw/DenzOGPk+1DFgxOrsPe+r70RUumEMLK4XuGhhrVp52nwqFr2Wv581AE12Lmuvl7/GYRn1AiaBbxRJmCc/6vq2k7TeqitzAi09mI1RxjB7GSvrqqyhdkYys1WpKE8OXKtG1YTT0xaD1IA/3WalfSx9zMNg3/0jm3ngMYDdlHRu3Wre2NmIiFynsX4VHEpjJlfj7vgFr9sR4NUyZYICF7vLI0N2Xqq0cAt89eKn+yR4n029GUe5sGufJSoYwuBdsAyCw6kIEBQIEsa5ExLcLzJWb9K4hIom322LQunrsk06dAYnt22gAyUmUYk2PpEeEktugiZmPm2pTGc+p4ue+LKOm9mkHNkvQ8zSJQOEM/EkxdwHQRZSDkqBaOoipj1PtlX5M9SlzOovG+wmg663/nhKO3iogIHFp/I3nqFkZvpa6IT1zhCfZyg95VDFYXOYIwuBeHdHUh2qFVv5It4LRwWu7n7Gdr/NqnAlSR51NdQLyTEc3J4ml3klBARm190287VuLpBInv1WFrwBmX9sw4NBRKq4Lf4RNPI1AtEwzxcQB94w6VKSWtzaq2FSYiXGTFlHP12fDSNC3Q4Fk5AlZPCzlewG2X/bhY1SHWosRcV3xjG28ROkjUyNOBnrIw506xpEx+1r6ucsxL/zZGSynQOu23fj5y2mP+Zc4uzv4+qFAaFIa01kicK4pnvhztB40ZvI/uGgX8KLAWhZrr8SpJmiWKnHljzfuO8Z8WBaeAmB4pNBt9s/AH8q0QTIbAcYlH3fYswx1XZNKLCKIpvUPqA5fw2qxRCt7k8+wB7rd7qAotebAW/J0GH8SmVSAvQutynmYqujT1xK3v894QfSNdtZfPTwfWctlaoiEbxKLHk7P1+ggMaP1CDf99JXuZFnJkYPR9TkM9z38ErmOpBcgMypfCITFsvdEJ2o0U/conRa8J4a5adjxI1758GQO5dAkvnPVVNkSE0Ya+0RxBqN25gvELJz+TWbndCBlZeou3Yd2ASUbcjWSqIZ3LiueY2fBDjMMvWCpZ+c6Lw7/6wfeVfaxsMvi5W6ZL185m2fX2eEwCrPH+V9imcORzonu4mTFxfYSwG+lmtMhOr9ZOiRWhEJxlFI7UMWQb/stPwzwPB98VuvllCXDW4kit1PHoMzxgIHPG2x5pOk+MB2RgnThxgsEbRhQIdCEt9jUVRdOkI47dWxpslOhlu6JJ+Ku++BxD93Z69PvxKazHg6kXlX3VQqVAV23e3XhHFmL0zL2QSOxGZwtKygH2EVx78vOC8mytlSteMWFfNje7uiOH17UAOuxkgtLSvFmEhptgcF8CnH1gxznFIe/51FbJDp3obo6bCCpN3A6rfsNJVbCLYPc366Bt8bpJihlTPUaUtNARTwQPfRzWOArun0dwPeys45NOTGl2Vx4qct5rxiy4RBAsO8oNQD3GmASU+dPYgtAvp8koIxWPnthsZhPnSX4O5UVxmaMcWzaVeKjIizSHmktgcm/8vU7uL4600F35Eqyx4xLh6sY2px+4WlxXmvXCLD5BCS24OpBZnxWhJCoaI1jC0rmsoEG7IJ0t53CbdDuRXpvdQ+mozaiymmbijr0TTp6Hhq/nH0benDbvpC0sXXO6YQsUqqRB8XEzowyXG95f5+V5huokRMCRIE7kmW6dENRPjjg65XHg09izbZnfnGZa+oUYoPYX7zKhYif3ZCir5bqGc1MGE2P31ZM8ad/g3Ma/rIOJhjyUUtjlCdVOoP1jRXW16kTISKJ0yw2CgPAkOkHZ+ll1SZ5OCYTtnOdBDQyy+cB/KK6V4jnFAcakUEwHpZjeqUswvFW9gda8+683i9S0rd8dJEFIzpdjES4BY1B8BDvfYczo2tN4x0ApMvfNRLsPBP+Lxbf0pNCIe+3FWIKAAVIcrmnweDMvOoHQqGKKzZ6yiSsR6hBH8abgyvMpJgDlTpJjc3FjEXHhFNCtECB6oCWI/y0GmBQG7obTZC5IgxS40r2PsQLUsnwwUvGjeltMa/Ojhq4LdQPmVn2aXOtU0tEjbKDtUxgEZZy7MmdfZFaY4YyhZNKaiLLrcuO3MQwrbWlgJaj/E8GxTltBoYDh/i3QbBGqBbKKfn4p1HtrUSmH3v2KYdD2IH3svOFQFvoH1AZRKW2rK7pv4grwYlC+GGk43xHW17pipRbdOCp2Kk3xghA66L/O6P/yDCzOP/u9uOSSuso0R+ILSLPNVGyh1pPXt4fLdx87H4EWX6kuo4v4y2RBT4Rit8y11ZaS7KygRC+vZ7MSdGfE05vqeFV1HRzw1xPFEC8Z3zMAkM4QJ2f8Qu7aoR1pfIYHV3dkbtI4mTCPItSi+VIZ+IKaPywkzXVJu/1NDMkLfCb4JEQI23xhaIqVfczNSNJ1ebcTaBvgzmdh3I3MQbWDhmofvrFGiOf9kqCCUfXTnUfBvtQPCzadOHF6Io9qnlgmBLcCgGtr6jwllTElyXA0/yjANefpGigaMqF2jj8233r9mvKq4vDdvjMPOmBXQWKTNEhTy4yFrpWq/eZF/S+EbJP0R6ZFSBi073WY7Dtfh8YclnJk50pRCefa5H+AA7+OibUWnkD6iuqQLpI+F7yHiBFw0TUr/ZI3G3poe16+nVWKpiXItlG1n06pHbrOOGr2SYkbQyhbdwC5ATrSRBDJT2TW1d85IlGmR7qEr0EiW1mjwfokTRjhhvhDTnQQlxX1YbVGf4etkDI5zF7JXmsbyCL7hEjzZd6DM7bSlXnwXgsxgTNMEr1kBEIzi29BGzTckN5WrSv31WqnPgOcLZcRrnfPRPWHnYHPSTggt4YgKwhQdboUCfzXbaF0Gcll1c+L3v2+6B2DOh4KPhNxR1Rcpr6Fc+TrOM4eQ8a4SmPtiH1hNRPzN0upDDLF4W1XlUd8NXQjxQc0BhUFH0j5/wfLM9fT6YcnI4MsfoT2Gy7Paz9my8uxIX40icImIbA4KC9sp24T8O3E1Or+bSEDDggLls972BcsNjUOjFpS7LjsmUNRRoLieXiOOQ73ETAFcM/1ZNyCKdSUtaC3C8dDAgn9A9BTUqPT95u0DBe0wL4gdnfzyM6KE1jjOxCFzZZiJKohAVstE5G6Z1cFfNgG6Ov+0jQo6JqLsr/o2kXjKQsqUrjiMmrj2hLxM/qGZfaQN2COsC4PzCCoN8GPH50kYYVbOQfxKEu90bUHzVmTFCx42G4YnGhpeRkhFFvFlMLXMobnYFftXVgUEZJM51cDwJg6s5GgXAu+gKhF02hOVWeFp3x7/OnxxIcRr1bsdcS+PjO+nqgfuBQmSOEwCcuf5KbKd+ZEL00NYkXUrzD0V2fZGtifA0yTPkdyvHQhKN3Fb5hE2HMifjYy/PbVIinYzVMZjFwt/E34SB2vxJQ55dQivgXi3VAitNPJFNdDLgq7E/v+XWulvNW7iNG+O6Srs/o36je1k/zuT7wLxca/1L8gqq9jhrMkg2OO8H7+zQDAPRLscdRoM6C1a6JFag8xCXT/Xw6mZDMghOKBjwnrGZXW5VpZxIHkaivfbFLiwF1cEJBAgoOj6eqVDZnPclq94BQn149cUEjS/oK/1OUW6I+DIAnWrWVCSm23Xxw8o3QrzgUj3jhkGuOGZzvUWwnf1NbAHNobz9BIGDKzXkGxeg+Ex1h7KDU/OVJ4grKyZ2VsGW8FWl/961GXdct/rPIV3r2EIyN2bczY/Kg7p1d2UFfhefi5zzSPPwZSxm0l3oCzBj9Df2Cp6kC1gVCWjmtQj92Ibm5bvxuxSFZExW22wx1KTywx3LaOXM+ICi31Gzxrx8bk8UuhxcDTw1e0JT5butztspTWfbFyRm4y4HdkxWO9OCfQmWVD55A1aNXMvpuaHEk43aSp9Cw8TRkWEapNYlwIC/OhwJN2XNC+moiPsKruImAl1n6OGgHkaEfSsSGONg8IfrwK0KfG6ifGT/E1CadYHh7WgAr6F3/PhR7lgVc8Z2tTZ87bxGQufE5eKmKUnIHWauZ0PVA3T7vdWIqlRJbk+ycupGOknhmrPWe3tugG/ZLe2OW/zTSUUfAd4PtSulj5cKc8oSHFcrnSjBqyF5SMSKbJp0CtZl9GUnaINN5kHRUsHmVOTu2y736H7XPJL7KWjzhPiYL4+jjFyNL8x2mR0WleZFRkPjGnE/FcM8j2txFm/i1yd9sCL9WIo3T6K4pGD2lGkWhHMbQRA7/pY78wI4vFMH3qriGiodGkgLfseOCMSFQluVegl9BREyFxLQ6KOs0XN4p4Bp0pWuXeyBx2UCALB2mG7r4Nm4g1y0aTwabCI/ms+5E17UqHSefYt68tJn8nJn3Fy6sWjtLqDt43lqfZQuSWhwfmj8NF0aJhzdwsmo27FtawFk1Iobugwh8G8bi26y8g97iK77mkLm4zr33yO+sApmIRYXUFNnuXNP1OczxfTqp9L67w1D7I8dKg9e3JG69tMPbrpNqfttDNbZnADUWNWc/TVwRG/+9fXJnyat5KWmCt37Bgf62ueo/eqoVR9LqHPzrIxUTlYJ8qkRapcMRTtG2wAPJJW9x3+b9jx8NAjRLXEVDRZ29zIYmdgFsZporKzIHFPRbbGy4uJaCK7VLo1GMirHs8eFMuHIvbYx+MkBGiRdoVMa7yDVECfi0vZ9x/D3eumkdmKbyI4d2OytMY6QjavhqTFKOQU2Am0CJIZGrXHsBdFx5RDPEbY9OPN9qk4+fmV3fBQ/WR+1gyUQlcbaRZnfqRTPeNt697+OMM1aDY2hlY3R2HgStiGNKQgKZvh2Pqu2PORD2fbQ7SsiWY3Kq30uE13gTIFhvNtb2SDUyZbL2fGjUL/UGmdHBy4NP5PUEzrlCYN9vsj9QtHbRAD6hqhmPbYxz7LnDgUp8lXmIHE7I5LKrXA6Rwaozpvt0jIcnM2tZAyiDNj5zXWWsaJuLQ4WUn2+uIAhBziAg/3zThg8uJKbnjZOOYO7b6K6o1ZdOPJk6/+8OAgse4zSLtzV2GECmh75CepJJzHxwR1+0gYVDZ6san11BDgK/tvKahkjijtC1sAge55iZsEVHNRVPzMxeYQ/U6tgGEFokqsUov1+h3vfijcVpIHgaov0mW1Z8RkZuRwtixGOviagwXon7E2Mcvm5UejgNh6Qqzv0Gtao4h2SlDCmPdZ/0jVZf/MnFUrm+dWgMBO5Csm8t3FhF4uOAE/nDzqsz8V9p9Ew5OZwpjGgRb1eGcUWSB8n33ETIikQYzlty4ZuEYS6hAOfgvJujtk10V/kWpn/F90ZM6xTmRrQIN/m87bvP6npb/U217hx30PPMuh5pBfPxGvWlDFQgWDwuK0hjGr954iBRL4080KA5s3hGQ4dANY8J7eagcC8QOU7h7+L60WnrJkGNrzqwnTJt5VC02iQaTCRpeRaZZZuWpW/b2BB5eiIPBtP0xqsMYgL5xWx3+fNCq7uyNdMM3466q9EJL4eSvUTqxby3su35+M3E1RRlOfuPg6Y3+RI8dNyLUDthYO5+0qTZCFucKgJS99nB6Zc8/aBCHZxjZJLQq074EHpp4wHrgwITVmU1aSBKb8Ie9LwrZbmK6a9AWHB4Njd1Y0CSnXXBxOOb/t8s3KRiSMNASKhd5ikqXAIB+vqJvDHKyUOxiz/GtqS3qZLnQa1CbmmMe5J+fMTMTUMsHpYHBFWUDSpnD9hSi2VMSOkd08Z15N+vncBwDS+2U3eHN8DkLRDZJA81KF6mh9yjELDBSVty9T8/b4pEPbJXYApe9Sk9j6mlirmjUNwRiQZ27n3pMGYmpyqx8+x5kSyu2t6kWBCc9twO7ybMBhHFO5cZdzbFESc9aiq0LfWQLhiwlrRv2W8xNalP0sVp7fqS3v/hWqerIVCe0YYCMKTjSWUSlUXtehH29s70ZrYJjlWFWPbzE05uxV2JL1zHtwWVx5reow1AzxYNsWJVt8mXT1VNbYZd5JEBZiraKTo101ejz54VauvQf2+4sQrw5xEZ70l5wQKChyoAEikjBXyGdnkrBrZlU2Pig4eJKJUKBmmNCq7dC9ekCJ8gQWdakVgUQQKJePmhXotUmTS1T9oUv8OLoH4LwkKH9t+3sFRqSSdBosQVf/femnPRcrjVdQm8WsY79gW+mbo8SaYArS7kkuTipic3JzwV+6vUyKUK/uyN5kSfPLsNNNEgZzVTJd1K9piE7zGQVseQbvoZg4a6c1LlbabaSnGm639JjSs5aQRZigYsHK1B5l36GB0OlmqPMC5okrmjuIVhJsl83H/JBQKGne4GQxxwS2PoOrN0YgyQd5hBSuyj0Y41AkwTydOtOBbGmsuXdI9kQRXw+4d1VGg5RZKxLCyoGfL3bA2AtFPGjKNR7wfn8DnLYca0cKr9Gg1g+xxa+BXM/y5lxZIdb8RVJO9zMnJg52L6Vc69U7t5KKXhBpWyU+yGbHCWu8Lzz0TqaeOM3TgwHZo4Fj55loSclCe4CDPu6rq77WG2X21f3/uBjcGneEZA/eT8JVhGz0ygB03XtH1NAg/rwBX9BC0s8FgZWsCOk64cwRh94SXG8RNdzO/FW6xoxkLTIVnm8FZp6j4DRnr0t+5CKIDLHPwxA4sZmr3jdmwDK2ZMm2clvNefqYodvmBv4OMbSc0/5PVoJDExYCSlYS/A+KrRSYzvxML7S1tcmXBwgGfgIbMDmfqCuQmx3041MkaixN/DNfOjEb47cnsWgPIwh0q7/MXAYBNL/nC0tOxhKFwlYsku9q52Fi7SV3HGifbx8xpiotxffjYQagihJLSYM4beU2qXqMOKVUgQyVaHCFBLlW9INagpYHJh+9IWnsx6AXVqfadzeKovgrqy+hG4mkjz+BnyzuvxVKHpVlot3QYIEeX6zyMeKZ6l+tfvLScDCBfgpQKhOJDiYFk7cwb4KaI9QkOKWoB76PEOmcMfMk3OY4I5LgsRvmOCZwiEeCnT1IQDsYt2zL3hw6VO0K9shklkhfDwh3RckP9dZbqEM5/dsQcSoohv7FGdgsma2WUD2oMObw84PZpX/BnJduTEaC5mZEZ7z20ZtuqeaXi1Dn2BBNPeg1gxnJdMPLo1wcSvVu62i3xgK1r/V1yw0Wmvt3o5XMl4/jojcRvnpr9pA5+EtDa5jUaVsFdJ0334XsvDJ8LmdQ/LeZwG3qKZnOGaNVH5CPfXafWn12DqZSUjKxQaEXqGhR12siuvhb8VMBDI6z0H/it/lhV8WT1fhU4J+g1SHPz5YPhr/W9y/Cv2k6KksdewG3gfQQ86uWS2FUNrIJbMx7SwVkqMgxhwUqIzMcOWyIx9JlG0j5tKnZaqZB2PFfBRAdWs9ABy6Zf4TakbzCEVh5vnKR/U8qMCVZuJGXeODksyu1UgybXhyFfVuiJOWKZ+BMJqRYGGgn57bxHCx3P4IC23AwoiJuoyPa5hS9oyCghXSYVFGhL34p0MOcNkmB9PG4WNJ48RX5rcNsoXxGaJsnA9u8F+Bt4M99CXoe/j5PcaJpwETq0QBa+dgw6CkAXjVGog95sI4/vasYENl6S6waaGlTv5o9oWrPlvW1VaGVqj+H+xhyq3ZqLL0Ik+d8IF5+0NJVo3jvzHQuCpGT5oCyJKwPECJqf3wU70aDb8GOowBVxocxdvke3Hvgh7HbTxMAPCuPSfq3NOLY5CTEr2Bq4ud/9szRFqRUWIeTnCC2E6UcBIiikyQdPawCfq8jAlOkqINOREsmZ9jP82x3mw03LsroyX8262ZWWqIrudaVR+JWelqQ1hk4Qp92v7azA2tQb2O4Q+cCmVexOplIo3CS9j8D4DAfm9/PxD32U4ggw9ahNRpKZ5WwsJPF/T19oBIT0PISlDQqXpabAQ1gJJ+gHn/h6kPiQ5hJA27Cxlb1nsPpcD4Ucf1CBqAmGesNJEqWy443bh7twyudhLfuphl+/SykJV4lvrg3eW2V8jSEHVSTQeuL9wdEbRNxWDjqJS997Jjx4hM34HZRkMJwLIM55qazE7HBufsq6TiksBMWQRcwYzU+Oaev1TAd95W22bfeHv1Bi/g/UuZojonEnhgSNJzFIKBH2CGInmJDBF2s3/p/EtxVevLI2Ugbe4n2CEHkLxPk9Qgc4AYUOP7Sl9745mde91Z+/sPgi9A5rIxJ8heoAmogResiz6K1ij08N+IwyYWpBIWMcFXOVzgK2Zy0TqUJqMhE0UGVWfZMrsiNg7xbwSlWMh+qhfLW5fvtN+39CmqLE4RvmbPvRR/9xE3f6mgXt8y4zYBP1Nipl5mLzdPGOGgJg2ifdJOpt85E5bikv5RbFamZVuiXuFnCSMZHBmgFcf4iUAQnmt/vCGwhFXHm6Nx+0OQ+J3oYqGkXgXla52n+mPZaHvfXUo8eISnAnKF4E4lggDhT0JcWFnHe6oMPNyh4fgcGLXOHC/6Fj/pexSb45Celiq0XwiyxOGgCy1pEtkIaBZkP8Y9FpGez31KnBzpKFFwQP1zL5HtG2xVgjk6blJ2dVBYne5y/kiMliVzAT9Eb2Z/yjkcWmcvRC22mf+dz+j9vTyGjOn6mfOxErxwD53o9b2+P6IdC/HdQWxy5NI0OL9IPUECC9onprNRZTtUI8k7KpOKOjkvYGMHsN+PlOsjwL3EfHMz7AtHw4iG+gPr0ojDwDf48hIj+jibVThOz1e8hyNJaYD1nXiW87oBsJhRPTB8+BOeHF46rsK0KYPyOZLIXfXj4v1+zedHY4QBOwbCFMznNayV4jYTBrn/TICybEmPgTjuT97de0IcTtUHt/bv8C4ZBoUvIeG6KndNc1Uehvq5WnD+kp5+xkSze8xohcTyA3N7b69RUlWN4J4XvtafGz8IGEyz5SPtjyVtWnf8WFiTPraqWt2XFbzKKk+ts9xD15xDacGY3ZjANQSKQoDM+fZiRS84QlUmz+JHrpIh/pxEwWqm57qyVbJEWzCsyGVMe6Y+bkEX4Yde9PzT68lUzm8YVKELrvVou1LrgjsFJpqgxrF1mI1HWd1RULSZELIe8QnFOUHPATC29FIFPoazvOlWXJ8PLy2G0mZF/Q2sw0m0fY+QFhmih+cptBMrrMblgA2NrXaBPJxOabwK26eWK4Eawn+wKOTc226HObuFnNwm/cHE5SAZu5nJPnAeLS89JoxzIRbtXUXZlkCefSRwG9FBS0rj90ZV7U1KMJcmntiuVeRiFXOqJk43+1+sWfTYaP1H5ZQHst+IgC8+kfKpYAxJiwItH62w0QPTxn/YhQc+3tuthMXuIj26WPLk3VOjXleX8THqIqp6l5h2eZ2qfs6kqMut73WEho0O+TK6Zaw+0iT4xZZPmFCCcGafAwrQC1s+0IcOzeBMq6fNWxRTY00zqVWQbKEmAQW4XtkM4Dn5Epsl5ry/CakAdr/AbW4lhXUqh4I/E4DRNDQrU3VLTe7A/N5LCYBUcFhRoMR7Dt4ZiXyUWA5fUiANT20oXbJAkKXHscnTc5bNI79mMWIyDiL+5UKSXfAkW/hkOt+xWkyDB0vVDaxgILPW7rQycyBTmV87ydsa9G3pWzhGG7xpH46g0LAW1nXYOBp39j0SOBt6bkhRb3zXiBkCA5eT2nuU2FFSCsWcphQtEjZ5TN2O3vYlNmL16ARPgOvoAWlLPue+/wuyTN9UDzHdNDUoewjBXDpWP+wWlAF9gj+/4QdUGt9rx7sbKL43Lb9oUEP5RnhuhwvkJK0tBYkOfj30pY4dp10APlCfL0xY9wOCUTvNyWXtQlYu83olFy0Iuh0V2eo4YDJ+ht4Se1GvTQn369J7wsVkhvRTMXqAywbzynOgIUY4d5A6XetzdvZuiTsrKS755R3ep/7y9speBFZWMlAKNbl5IDP6HXCu+cDj5OUc7d+TmnV7ZJjir69PUH13Ofz1wXKzT7lV7dM6Iv2RxKgDJs5t+SuNYStMLLR9XI+m0dM23aqJB5NDFxQ+RhVNfIH6QrTxLMpvKKH6rYTsaWP/z9v0TJQVwHQZ3/nSeIvIJCw5p5Is1W70t0gEYt6qqIiQi5YOH8q5EFhqKDTIs3k++1mAmkN+k7DwYOR/7uKE4kzw+lUP7s8ecBig3pOdEJ8F3Pao3MC5Zxw2Lz3EnEkpfkDcvzbOGJ9/MH10W9ZTkodLe7f8lCMJ7AYkr/eJFvzIXKV9aU24Sm4ygvRBYJ3hF/YCfKvKBXGsfXDeiiHXYHHCG718/+EzgJDx1M0kLAmf8RhX3lLAkQulkyixl3Jri/63cLHSI+REaNY6SZ/TWrVO+HkR98rdMVz8yOmGMROhxwD6MoNlCm4eAzuHqi2ac49Olol7x2fTVXsFlf+wJdbbxmFqAQAeXeq0YXyuV10aM48uwCxFEUNabtXYmNSDH4Wps6MyQ6U9SuHZRImqT10Blws2lIsN6FqgK720hSl6dwYIJFskc3NJTraNBxdduEDzlWO/qnvICxgi/kfMIV5eiqcYfF+PuiI+RS4NIo4UJVayxuqbyn36L7pAmbfTGsvB1MHaAIjhTfSxs82JvaymqpE1WxR+fZU/y6DuHUbmeeMPZAE9YyTrdEhVknCtSZKrndB3I6sLvE3UjTMpqDSqQxojZ6RsvXW1rdKZEvm85d9+ODYhmn1+DxfgYyOrcG7EjTUQi+ibNbk9O6zd6z45HNiPjENGx3zRakSskfMK0t1fJUzFizEo8CA9S92gRXr64QnIjP+ryZ+Q7m/pc6G12DWJwG6HageIElg1qHaY0INlHbr/t2R+Yn36alToBXUqXSRnfuRw8cHanPugTCv3+3NLagjPTjX6d2vZXSFwn320spAYMP0aKDFd+wB8ctVaF+p3JqgdVj0QO46NMsx3HFsckDWF3hvA1opD3akIvj7AtuzjVyF/7XO4ubcgyibBwLQnLWW5vsdG/Cbwoh8NdX9kmgHhVg9jrRRNbZj4Pq54iT60z/X23BBhA/0Qh/qH7EzP6odcfqw8TU3Z6Y6Yk2o2hzIGAn+5E1uPUAE9ghAwC8K+4acZP1TS/ljmB1v2zSKifIP75evH+BEo7A+x+bVeHICJFsh99sM4eBRhhqokCE/mu1paseoa5QAkimbJ5s/2TCUeXI/rX4PeJu8o5deodYtwyQGLJCsHe2+0K9TTkSZmeYkD2ElbZIJkmO2C5FRQIfiUx0cEQ+TC1hMIQINx0d5s2IbsUTAVfAKM+R3rAOhlj472a1cBsmQ7UmULOaEC5ZThNuDnObjhY5MNsQZt9KhLIw1JKuITwkL1sSDDQ//ZBpibTa+/fDrBQBGeNZ4GCSvLZx3I73q1iaVvGj6DkdqKNgbeaUW0n9dZRnpDCDG8h+KgmEVkggsmoumsXiNSpUOwM2AlLse7UsvTeUynv5nrGqDpzM7uel5vduefhm/Y8cGUyl7E5TA+bgWkS/EiVc3my9b1iZcR4Vuaj4wlZ8xg5DM6BLI+gvm3CDEO9Cbt1c11r0xzmhQtfdR82kh5iGxbe6klcmnrahKFoBxgP4eUOb6I4gNP/bcmmUn3uR233eYSZxNj/qc5ZwGVbmv0ImRE0OF26iBpnePFV9YMMaz2s+s/zTUTRI3WNeFA1cTXgmvN/4/LNSY+uY3bwyJ/y9bDEr6UntcrDKfBMJidhnMZ6Pz6dMOPr+qDDI6p7l3cGB0q5VGp6HGgHWo1PsXakhHHffPP1a+QnxevJk19g+DOQinWjEVq8rzh3KVz4VT6oPnR1Rs/JFm6lNbx6vo4KPinC7Q9pxsewf0w2FgHQnapOELyIs0Zwq5Abk1Tkaze22/5USgsumQEH1zcMdjYiuAjzDnR/W5BZhOXFgzc9iBavahFkaLI2wzQATVZvSRC8hRgPgO0xoerns3zfzhpe1Q5SNGRQck5JAT+GAK2+d13yN/NAjPMxtCf4yFodipzBmT1O7s9EaN26Wq8gHQm3mzljxjeQ/T8iSPqSUStQ1sqCeIdLl/iQhdc6WcHxyz1ezOzJLJRXINNcgaOuTIJn1Kj4f9xzk7UNlNgAfEqwKNp5D5Ne8CoxCm2XSWH7rbciRlgl4v3Yxgd14yoy52op2i+OEPuDDwYCIGqJHkM+0Mp5Z8HiVhtfOvax3WXGuukHzn79b7QPflI9ycd/oJvMtuOCvHauXpGxF/gTwA7ke3C/pJrab789OMPt/2vO4A1hJFhSk9+5UrmOk3Ma9cY41rUf8MUBZLgIcUH/MsPdE+4RbAZT0BySeSmZsqeYMTW9reyPHNQ5U9V3BAbiuyxGJXb9IocN+rRfBZJYB4ut8j0aXCxlUTh137W6RGUDzA/0jkizvLPXlsiIYUUU8AG4ZQe9z4NbkDVW6mj2/Z3JIqydGgj206p+7hkGRHauhgI+MYKGbSh+FH6UptVwuxR8WIZ/LczUlz+YePSOTwnpT6gvWvIqjTu6ndJhS/5V3oD2GgrNG0wIVfIAuWftk2heEFhPc+DojiSRnquX3yiZnnyQKXV0TFDU1kuIjXMQfMlLRKr95SiIYlUF1KjIkmQ/gAOq8WLWPys6sdChI9QBBOo+8E+RpQzl7HUoln+90DoYgC4q/SDauwZC5rGZ2fbR+Cb+aUrh6Z7/Tbs/LvNHYomL+0t+bZc6jrzY7ROELfW40sH/ktAd3E/b0IRPeQyu7pUjm2sgPx1yyX5YZ2Uf7YDchmfrn8XPaO7KA3Gg2DiPr1u/g0agrFhJnsUgOFepoKpqlhrn1M+sxcBmnQnNKLIEfq3AFTAhXW5s1T8u09seOyL8BWc/v2VT9h23B/NEMvGQyIg6eJ3b8W6gj3ONqVJ7iCGbZ6151S0iadjZ2pwf1fnVAq+dg9kvaQHv79zxGpuNoXwrONUyjKmAvM+g3ZUQcVmnGoZJRWqOU9B3mPrfUazOk6tN8VwTiZELJMqZHLY3Qhx8qBY8pL9PPrc2ePijvhoBWzGEABx2fGrivOeB7Ci2srNDMHjvZrADd1FhUeCkbn+ijGxmR4Xk/602n/+Z11AYwAzgBmqrZ/68fydXqPSZjWmPbek8ZEKAgp9BmNvCQ/ffaeJpg44sBAE0JwEOiWFimnD/pB5/tUqZmdgzvyC4HrC4mJLcssX5GH1CAMEk/IUxh5QQea5r140HX6RFyf0iHz6MWGZUiuvrn99OLtITWu6cKXWOh6aqjyRWFV8M3on2AaaGpNgWCLCBMoN78CI+Kmz8ZOENLdZDhyeL/UcvuCCcVikC7xi22EDqf0LfRtYTnc8PokMzJafVCUWuQKJytixlSeZjJ3PnRQffCqiXk/lmCWgS4m5sUzrLVvsvmea+SC8kvIoe1i0RNMk4krt/HP4UjUuPV1Gg1iaPM19fLtqeIZb/JE6JbXwkTJdLwVTI+BXPbZImbthyxWYI4uuqIh71KuvrzOPJS1yggEPrSAZuM4BtUkX4tZXGfdvb/kwj1M01WFB4XZdfWvGR/XorNrnzozDF/d8f/XrnJ/rNbYaeTSYW8kLtXswwlo1H+EMadB08jmHZcsb+n+MuheGOWfOtuJL5ii+aOdqEPjsoxA2JIbPj8cnQbaiT54mkqjCj5xNdEBNVgJo/jC78yCx5xVD4zKK2Se3Sca+a0hoMCLgx8vUZsWgvzoTOZcXJSUVabQ2N0JwuXupadERsDKNiiTjigotaho2mrAXWgFqocIJFPrsKj9athRRAKj+9mhtOA7UN/fKKxLatj2nOQloyBe7znTA83u0thLcHZL6KbobqDy91R6ugpdzyrbbB4F2CYd6ikHSfSUDTj8MAfUkmcL0y+o6PioSyHVKw1HvNPPbKDU2g/z7Y0GD/QYKo+i6G7QLK4AtUiQh8+cQ3HCh3RoNqEACHaxfSQBEl4Tu3RrpJcVhR6KjId/QgoeUThXTg8UIPjDQCukyv8pM7DxLxnHan/eIqx0BVWgan2F3i3XtrK/YKZhmqRxiRd3oPU0ODRQSncaSyL8eBHKWTbpqyuSTKpTpBK/W9MJIGfd5qp4EJWQZNjtvaMHQCTnwDjr2CRw+iFoqS9QOBR4p08yjcL8XxWx9zS/QiysIDwMxUKPyDwOVrENb/1y08sMLqNAyVSNm6OYiUuwV44G2lT22jbAAo83G3EEwuRG9Nf3b9UZF4gQYZPOIWJFADnOqcqad+ooTxNRUeHn25hjM4Qr2COMwTSOdHwkQ3qjQLr1VaFDDl0Cei4XnUuERECqShx/cKRpllTmyb9bLUStgqCp8Imm+6Rw5YdQfV8ss/dSwA0nnw8+7o/08CHK1FKmJ8s8trtQFGC9XYdC5lK0vqkB7g03vRey8Or6p1Y99ghtGiiMeadQCjuQZoncEmzzNz+Sa/hB/TfMdFoKcJvpovRpvYxqPNB2HEQWrocZjVT9M5pCqbeK52XczvcpbHTLWhlYdRkI+gsppjGXAtTYQ/c6ZJPNW16m31N7vLiXw2uFlLrubgncUCOe2y5EoSklXqUExRz8dC74CyEVVEruRNQ6wsTe8N3hlgj0LhEv9bD18P3MrpfwAvr1n2n1WMK9r5V6nGk68ZFZSzW07ekiYdNjoKv9Vff1l3QYJpDZRVuIiwuySAChmQzhsuyRIi1QH0sDhVWE8N0tsk7+N4i53D4xK430X3GiY7UOvYi5btVBsmsgIuTvlFmashvH8V6/r30hd63vY3rreAlvbox24pa6kPmDFSoEpbLAX4y9mCb2Re9WpoTD9yCW0wtHZRRle79B6uBqD73ik4hu/WnBKoLt424WizPR8ms/vjzxWNiBrmqdBUk95q1zi7pzBrCGYBuZblJBgPVt2DjxztsiJdZAGYP5vfZluN87WKBnDaUuMwH79QAZZeEcKU8m/5zgYzI7sStT3HhvYtloI6uEq5Bl/xa7MDXcQHV34RoRKfV50WpIISY8XXzKIJbEmI3ypci8nFchEjoWaTle1XyEab23NwDFqZ3sk1fFegagm15Msd4Tj1E2PCodPYm4dx3YXeAuy9YsQJW6LpgFx8mJHhH/biyWeEsSdFNdEGjT7vlqJaHT6p+O1Hk+Wk3fRdDKJj53UdO/vK/Tzjr/SbYRj2JPfUZUuyP+Fa5N/XzDCIL2eNs4Bb9VqJDy+x6JlZxYmvIPVJ8cdorDmc8/tgoL2GTZYV1n2gDorULCvoillRNi7jZmR1Ia1auJFSQT+UIdbjImje+Y1sKowHcvcXdhh2/DtrSWf8kO3zKURdmRR9dapXLpqe0maZtrBtKQ9PlXYIOUGgvyDvRXz+WpIfCCrbI6w8MhamqXi3hbtUxzBADG/SZAG8mzSMtLjZh2cTY37n/cQ9AOGYJT+Y5XzphlvZJ28yyPui4seHesD/V9tBbJlnirxG6Mq6flxhpXJtbsKyynfQg9m9m/C0ye0MhuVDIAeBm1+Kn9sxXn4ou73/WADDToU5ugtSvEfOGfh7eNT9NyPtJqR1ecN1WVDZI/mmFYRinbkGZL0nUVmnzjgfDwAVF1nuGvzL8Lg15vBad71+EjJ93Oo2OSDhIA4F7DYPzopuiVXar55BMRVhwRBh6MQeIvAyuELW8GhetiSwAvuqJlR9WXgec+Bbmk+pZHQbcFkpV+k7o6hoOtYaTy6nWce3h/8PV4/VvGQJAuD7/5s/avzJaUtnAVju4YJG/El9OdZTwh5b0pck7OF1GABTEuZ7qSq4jP9XXpZg3uyDhUzBOUOc8CxLex29Ct4wzp1mbmXZZ349oM5HUa4HSATFQfWvh0bxXlSEvGDGvuIy873SAJVu6245OcQxS9okDOhQq9Aczr9nGDoA9gshIvtdVmhBH+Fed5PTozSLHlXghDbTrieeA/eSwGQQJJqC/jkNsaFmbxAc/6vZyC3QDZw+MlRc2xuut4PNnK8ZrGtP2+5iLxORK2/yZyG8Lbq4DYZj4bbaArvv74+6HVpkONAw61Rij5zlqXwcWTtqkNEfrick8MzI61uBEJX4MQ40Y64yu1ZF3dd0AjD0iKpRCrXOaxRyqR/GZnC+egk3cN0l6IOV54F0BTFjSQVHh4aVYoSXqmTSwjPkCnN8t4Dzb+t8G+dAYJYxYqkqLF6nL00zI37Sw6XstcvS9vm0XMGa3UO1c+wmMGbSBO0rxeXJXu00qwEQ7yXxyJkl3+GQboBeWpi8IYaHdavz/ggwrQ7WZVoJMypn1ptxYd+g4OZUFs7ggbtzwJYrJYles4em08c+sTU20mCdvAA2GPK15epfbU1TjT8f+gyDfKUdLUJ4tJUEpAG6P+9nY6j+JSwH+pgdjr7l5svyz4IGnhY2sBcEQCj4E2/XarZ2tS39l/3erX3xjdRbppanB5nsvm7trJA1+VJ7auXvTmLmTLcCh6UBTfpe68gxCazB2AKh3rXsg1gZGcmJFaJNHbffAWVKNKQYEJQR6J+17b7MlbAI73eK8J/d6kYyvvtmx3YWIgGdDOWBCkIjDT2r8U/uMNA0AgybFc4/ERzJvwLs48OB9xvyw0GucjQ9fmi6lqAyl+/vubIs7BamdK63vdS3Q616CsNs3gT5R9xvB4AswyRHxbedVG2Fu2CpK0+I2Rv49YWY1pdnxzlf7pdsIP9EE5ioKp1k5j6wQz02zb+OWr60zFdp4Syap7nPHKn1Ypys7ybx+C3DzSlcSg8CEsUvLlZHV6KG//guYMMoy8ZmcX4sNUTcMQa0n4Xnu2hvSRe8OXpNRHyZ2RmizvBtQ1xdtZ0S/5O0hKu1y+bjB9ByH3IYA9bP+oRpOlRi18SaajiDFH2ZmogUSo5Orfuxcq2B7uX0jSyMImEtPw6p9OjHH7ifIOtuul3Qo7oshuhpuOqkQ7EquzqCQaHWF51j0crEbptx8qnXsUzLR7IRBjcvwRlpQzlBrrJ57IchLcOq6INNc5tnSmAJfNDf3fSEHOItPPJsJlmu5YXsUkyeXORir1quAFawJqEmnkZ+te/iqd7e8vesZfK5MowkHgVhdZ+4yEMFKiV+OfeT9ukT5q79vYbnfMl9b2we6SNx08SbD1CXb/JvbAIKYhOFGa30xWYtowW9EuZOnHbqsu6S4RRXYNZAMoW100RaSy9rWEULlY7ew83/m8Do5UAy38FZgF5vnbBT34fip1ELMYGd3aBhRcAMiwm9pfhVA3ZPIOBFR4/mTxWVBZ7idHG/c/KEnPf5VdXjf0LzoOFz6HXvwBmVQe5nvbQ5DXm9fiHqskc0J5HQvDV51moJT/H2v3GvQ93VGn6c+ghFtl2Er3Aieuc36wxiifw1y3w6/myQGBuFEP2dc60o2NlikIy/EjrIHFYIqyZEkXtEFgmYACRjnjc7USQNY8C7VT7sxihwUh8LTcnpP/HuJ28ZDvmigtMVXONocnrHumbe4ViJjCJXq8lF1ZbmvKyroRA+ZUC2wbhc9hpCxwwvdKm4gTPe8KenT/3Jqebk8a2Zdhrr0WP7Gxi0+zAAxtPTg1koW3dy6Yxcs8rhMbE8efCrN731G9AFXVJYHe1qwZrDGZgMEa+4ZwYzviNe51OY6oUXlLYhQjL9b1tRySmNiic030Lcy+fw0PlyBLM86qqsl2VPSW8SxthYtpKF6h/bIyCGoAfPCfi6AHOiGSmmXv6XLxuj+Nzsi+NMjOcmyJk/HtJCUYOdznlXx/iaCuezpphzfLizifbbCe9+We+k963Q8FAP2FrbohnUlu6Dhun9GYwZkWf+7gZitj8PRpdW1TbEifs9wblrunoT5nGJE2xKZ4yKQLiZA8uP/guj7cybtkscbJpcu9ssFhB2Mfqs28CknLM4b//gEZAMfypLe2CywUU2u/zTCl6GN/sKVg++w7pNS59ZSMgbUzuvsxHt0aeOIufgwXlSiZuYDk8Ay4uvRQt/Qwyu73MNirrYGIP7wugm/hCbjsqAevoEKi+sy7d/LKwCG8EHj1aiJj1ao68tb4V4zeP2X4ox+AtveUP4csQsLCfYWMji4sojymwyOLqGDDHYop+HMTa91jm8ctBf0f4CwEa+qwnTvYhnOn9NOS48oER025Ok9pPYwZvN9UFNjjaYT4nUlt/iX8J1nXJtV1fsXhSaDL5KT0eLr5VSNKC4yI5K9oOV7etWoRwFvqFj+sUQFpnkLzc/0eXpEJkMY9Li1jisV1oUO+5dUGpvT43TJdN9nWmk20ZmoI9XafN12SMTx3Et1VW6NqMkK2zogj3P0GnGPTbV9m9j4h5U4I1jaI0A/7dnU/o+HqYqDmyndvx8lEA8JzQ1d8ztgDNShOqKYmmpKxe9VKraA5hYRnCdUT7WyV7ncNRKSnbl4mOmGp1hHi2VC7K/xJFJ5lm7jrwNnaD4+XH+ax3uGzte/nqG+5PjdA1COog5z5fhkYSdtXUNrEonGl0KSuyJf+Qc+09QLL/Dj9MxqNLPddNLRI0z/NdqfHHDasForiB0SV0otyTwMJsQLGm3Ejg1LCOjk818RrLISytSH1BQt3/1EO5g6jXDGIm0Ud9tHKv5aLeHK6hasKvcQdxLSvq6aAGAIhDfh/J7btJdNxHjtv/n66g1xbkv+ZCssKVxs1HCQliTGqMz8oQZb2JU9Af8QRPuTDG2We4cHWccaEwLtnVJS1QihdNObACc/wqs/kJmK/dNEb/jxK3PaV1rIf/HgTPAx+fyXRssHaJJ0zpTkZc7yqyLvewmRP1fAoZqxi584t6Ka4jGK+tg1jc6C6qKebf3BekHNc7GvVJE6GypHnaMPDbLMAEHzGa5QuyUfaog5FWruXneqt+y59Ui8ntE7ruPl1Y39Fgio4ojebcb4VbwKGxajZUmjtlveG2kN+PvJtE1EPhkNrQbewDH6n9qX3VynBleZI/BfaQQrtijoYKC4pEWJDUqYFvgGtk943mfaYoPtyf7nZnQq7COQDCXi6zx8KfmZMpBH4T89kDJpTa5envw32Z5nmk3Ix2eSYqZ4IrLjShNHub51bS4sY+4JS/zFNQbp4B53udWGVL2NWoir68u18XTv2njJQMt/HThDmfAUoYfvKefaiU8d+WMr8R1ry0c6QXRrJV1F7qjfwKyQYmA0Hbsnhr9sWY9O1oJMAFOdNSqQTuNZqOAGcEtcGd8gVq2leKtBVgKTVw7SldeialjBOCrhPhnmgMICfbHLlySas3Wg5UzFXDVJk+061dOq0hJ1e/b8N8NXqzkF4Wr5FBmvV7Bame1BBVOU4HwkFgJfFbc5qwArNHPbLkgrur67a70nLPXbgjgD4yYJvaKClEn8i3W5ZLZ4e5GQ9rPFgsjsNcx+Tg1faSxw+vnWAKJ4pz+51Xxvx9Q0gYF5p5VInGib5D1apFGAFqSLxzMxehks2sCJRbwsgeTlCTuO4thSTxtBQT+o9eTOM4e0BhJ14uO8nszxyvtbHbMlo1iQH7M6yA8PCygu4abwZCj/ywM5yxnuaXS9qr5JTnIwlv2/I7IrVlzk02kVFWRosKq3+Qi217AoVX0A6q9+PQ0uvnLGtjfkExE11aJbavAIekhDwGVVh1D6fzy91bz3SjBZaU1Fqm+ffbfamMK6x0LsWZvqXHeZPc05+hBjFvW8HyOh2mv6Vv+qTMkaYMFmhSmN+3nUjAm6VFk01x1QFT8Cirtys3UdETmXr9NxUo3A5/3UF5cR8c44f+xXQI3PtLpjMXztYGfaKcscgtxF+HID+6TdosQjxT+ISnX8qBWiNpiftawjesFC3rTA3szZ6Nc92RAz6mM/gPbreIpnwnJ9YIQh9st4u03YGXkL7e3NL1UP3PAhn8rOHWYb40FxJSXMwdFW4iwC+fkIcgoJ+yEQA5US6KCmBEcJ7Y0CQnE1cwQzj1NDUu572gEIhsoULaezbFJ2INMtk5jrixTTlcpV2RHQY/63wbL9vSY2yJQiVKpIu0eypdOyk17I7tO9MGKJmQ1Mk/z2qplsnNe7E4fN7C25Sd1VTfQ5xhIZcQE47N1b0AiR5cWpOJkLtqMvuhGiNhOGAOOYAgIj3dm24jN1Xwdm2uJWVx7ZvV/H+S68jmn0me72/fnNs06qUXcylc2NG7iIEQFQtgQ+BsXraL57cxx20w/kfMzrbsXbhj3D62K0AHUctvNnPKhAdfbPomDv/sId0gmGX3oEbkIx17JrMkqMBReTyXYvCPY6BUHl1JdtcV2aR7EQjQ0XekxPXmkKK3gEwlxLR2iB3nNou0pRfXEJp7KoHu8P3L8/337Sx/VjC75djumxMAuyzGAxRLyPD3P/+kd2PPMXdqgHDRJLoZ8TsIS42Gi1S93g9dX0gpMOG/1yRjEmw0502lpMz586DgvOsBtp+jR7KfuZHgjXRI+AYPXZU83TsBauLBztSNRqnm8yhnknhi0W0XKrChpfPwYQoo+Iw0cEk3U0MiieUbuDdrNQX5cvK+a321IAEi2vf9XWlFFzfJfsyD1Rl1RpIwgy/Zfzx3bjVWhtjKTHjCKcUowctNR8AIOleWhCczoqH6xkiOdIaakNu4HQOWpxTE2p5BnaLm0Ry6uZpnl89GUljVNk5cMB5k/WVcwE3GyzESRnLqpEmFbvN9Xy77zDaJRQ+YQNFrnn/Dl436oYD8BNhlFHGDmG9989UH5v59c/CelajfQGOZpn2jB9YjPvCgWKTzfFZ2RY/swgwTKzVVPqebbw/VBBTz3WzF4FoEJIbaS2l5lOaPeif6SFI16TxvNaIVGEBr0yQWuAUSx2w63gEa1pLQbtnAIh9cP2215YS2NULcxvuCUzdRpJCVYNKB0fp50nL8YxvmjDSjUNoZFVcCU3kGcRkbtFjrWME3NIMLCdkW3dlnLpXUaBPN+OHwQ59KZ92VHBuoWBHJaGbrZxFB9s8XO8JcAcF4yK/nUdvpiKooZcyuVEjrkoQPUegrxldM632K/tJMEes/7MfR02+ejPRqKwqi+Nsne/Jew576R6s0pCnezjs1vE+TcFkzVn++0l6Mm0NWAFcnmWavjbWSdMckVB7kJvcWR7nAoQpVT9Lpv96ZrHrOtVHRZmY/2Lh978bdCmr0hysa7vnHNvJ1gFgnXs2vQDHCb7oTDu1CW7SvCucFkG7ufCVOOwLY0Zw9BYZgpWGGhqMyn8vAB379HpxOzj10bdxkHeUsWkeIEXWNWFFnmSLIk7SavhcRRZdF/2I/8qIOxniHPwkv3068+XVKvHjVBjPxQqZ7fq7bzSrn4N2Z5yv/HINWVbG5kh1Lhh4aVitb7M681+oBBY3m11yPzL24yVXx+xoLAM3oNw6Y+y8J4qu7jEYyV0H+x4RIzXNYZfd1+ZLjw/vyzdg8dCJRqM2IBSjBTVYVliCdb+TZ35Qm+ywwpcV7SfdyG1Es2GJCPfpc313//slwAAxeDvnyPKTWLjbzmCxqgleKKSFuNjUg3NJ4XsqDDcSM7aD0/pCZMV382InVals8YXLqxGaXZNqOL4+iHhvDoRAVeb06Pwd1EGbIj1xtaYfFyrEgM1x/7K7t0wslKgZINJQXT++7GQP9xSHdG/WMXb1LBPVVXyIUS03sOXYC7Ari8kF+F62sIC8Izw6yLldodSNcDLnuEuGYrVGAb5UXFAuHFjRvMHUNV0yeJBBbgR+wJYk6Fv+4PP3dbpqy6oMWBIpuMn/t5bwbi1tIijrDgF32gmHwtziaO10x3r0sPaYrztFNZIsQGwImQPL/Ga+kXJk1mbijbgfN68D882MKFr1M4xjEpKy91v0mgaFCZScs9mZ7yrITmvO8LdHLRZTPVYD+5u22DllIAUi0JVuC6o92NTzYuiJNDX6fJ+0wY76C1cJQYFlwgSUOgljx96uWdGg9aKr2XqT2IAwhkcmEPUKXCS2q7DW7gMcFtPNvRnAhCeK9lVP6vYgnQ6cSUwQX9ZPqLgmHyNOxP9UhhOdM9NYm+0qOhlLTaCIUYzMsdD85hNzKG5e6doz1pi5LLr7I2inf7tc17l8cC3RIWTnXdDvXjATOBFZ8A1eqargBXnTTSxPpksldjAh6aknXlb73ZjmyIs9DU+dhHnelpkxhF03zM2sRuoqWiag8ZubDig92KDv31aS1lp43uPxrHoN0pHl5gPBTDvkwOdlwIi5BtvhaYgQVzB1RPfAzBOlv2qtlioj3DgO0cNctV33CrXk6BAzs9FLqhkrHGpGxLjCrYO2l0otXhk5gYOpg/8sY/4PRjIfERaa3zuomQEsygKqKeZVgoZ5ZKXS9c5juUwTbRYwQDU0tYRo9IkASHjCiE2HIKfx+MARo+7knxaTZKI7SWoWu5ZNeFovxz5roi5g80Uq0kGYbZfdFzif1Vwfqj0EQKpTii4jvSnjbFs9MB/UNgtVjRq/sXAXuhx7fMVx8TCz6HpT9Z/aI25zs9tqntp5LNAE6fvBxctSVfhU9Vbb69XzxekKVHK4CYCTb2zLxe9ZL8C+OMbxWax6KZtM0ollWrMBoXzt/blXw16Ip0x5410Ji3uFIwFbE6qKVnjMEk2qdTVSnsh8Y9DCi+2BOORyKjtgVRFpdf+Q4fHLrEynWfe3BLucqGB9AUkqKEFyn1rg8XyMnKiAF3ZCzOWIGp9lYES+jKenqW9s4sAqbch6FKldK/+rNIxLgcicws43+E0oefE16tQXpJLg/vp6fY6970SImdJCx+pjwUiExlwy/C4h9iX8QK9+i+kNelxxSgtp7du+vW/qKbcm1DA1cJZRlT1sIhOp3U8N+TmdlZPtIGKEJVhxzK5alufREFUMnfvlywdxMM73SorQvhnmWGvXH8rMnCu/cTmatvJto4FgDtt1bDpHWVEH0zyMsFcT4s2rCm2dg1WVTgnFvVUbyco3pbrNmhPu7zuuilUfcvbOx1AY93yOvIZYAIvVOuCW8LLCMKlJR2oZDrF6UYAXcr4ngeTUbMhLfic3hZ/+ZLceGXGnVYn/kPCKiaRmd2AELybaihyA+4rE0JoRd9yWw8OqKvSnC+vEH4pmAZfWwgAAAAAGlJLUkx8PeiaKJK5O5oiTHmD2gPbpY8fpVX9cftaz4+3ouwCbVch4eLvnhuhwJEKgiUOw0m5HJJFdPRFdHRgGIkLmBekXLJmTy/xufVe4gGu2wpFXPMRBFjdlmmc9gu5XjbydsBXz6l/5aqTV7BpLNL3Xnl/rk0rgfU5etBAJB/N46+X8W4oN7KJjbxbGg2qkX8de+Reczjhkt3wZ9DTN4Z1vkYg7oemdOADIO8hFRHPd0lzxAJzd9zCZ0X19i1qIdHa9DmqmNvObgSmQQICB5t2GsvzvTq3SJiZ+x85KZzZmwd4261jNS9N5Kwz0H0osi5udbQOlzboaIDzeFRoT3S1Wqs+nZgC5R+HgdVvTmUkkoNJ6obAg6Nobta6cb4ijAnBdrmypP7ERhGUPDSdNhoH71axSaMaRryUCWV+6WpncJ8EjaplTOLH0g33+AnLy0D6PmUyKWVWVeY6HFBlNMPGPowen0H1xRMIIjkdbx0uJHtbmM9D50Ib1H4wcuQy4AJ3dmDQkIENDya1ZCQhV4LYYpPLvkYzQZTF7FsCYTiYToJYTCQGyhbXD2Qt6p0EVo03j8A0KGgb8ugM5vjDI68AF/t5K0q/frl2tqOSlV55X7JkASsdElPBMa6ofiaXXU6VIA6WE+QLuj3faCYvVW/6MCdkZ8MoldXONBDRa1neLIh0v5ZWaZQBCXQFnsEwXKsEHMQjokWqIehdQM1oHjzMIKODr0muJoNd1OiA4ZGLf+IejzBBpw06R3XOkgVO354eSU+2K6jkgP29Bx22GYEVgZLRGnb5sgzqStR+AKUFJ08Kkq1d/2DIWmEl+YALuA5IpVKn/ahg/LuF/zp1yU8/t7WD8OaWmrsGJ+z+QuuCXE+oN3oIpbtQvQnB81jrz2YTjsuFBSOYzj65vi5voJ5kBXdJjbO7PrZgBDBmNMVEDQ1cK1LTqadBqNIh+66jszvfkqRcCjQqRXl148APq7QAr7usSw3sFLT/KD8Cx7ESnjdO1/ro9AiSPxvYzsqxwj/pvHJkpyuXuufASpk2uxxyUaLb4jXv5gGr58awYfDLGIWlG6M2ar3QOEb+A3luc5CnNdeXwPlD8lnY+d8/3ekMg1ZmBMctpe5UJ5HtauJs8JljdVyyErRmeqLYxOjGPS7964aBqQd32/Xu238XA/0ZVTx7MR2lCQ0dNENnqQGUVJdY089ZvXDqIwvOazgdMfNJX3y/RNY7dfz+ePkkcbFh0Tpyk81d7N++xyx4HK5NHl9cmrNGActB4jQE58uW74BfFdsnd+jt21fRb2gNCrChORBvuP5/0WjcnyvbAZu7me0X2pBRQRRmoaxAuIUpc+3PwESUz7cp4kvFqcefabxy5ujhENNn1gY2/B0i1SYs7IWB2lqCsVe8oh84eJ3nhd6/EU91yloMkIL1x2iB65TBOQWhE6fAWUAgUwAi2JLE+PwOuR06ry0XdfJ4w4aeHpeA2auTeGcwsJX1ea9qpshtX6lJNyndPjBkmKehzB6oXW7/xGnjBvWQ5fxIcRWlbMIQIXvGTDWSfUINTxC35WgKc0kkD4eJjo0Zl9C6wySLLl847//54aQ65Q/ZWg0cY1KljFw+c0PnLx/OgPA2qsAAAAAADWx5QCFKAAAAA" alt="AutoAir" width="520" height="199"></a>
+    <ul class="nav-links" id="navLinks">
+      <li><a href="#home">Home</a></li>
+      <li><a href="#technology">The Technology</a></li>
+      <li><a href="#benefits">Benefits</a></li>
+      <li><a href="#about">About Us</a></li>
+      <li><a href="#contact">Contact</a></li>
+      <li class="mcta"><button class="btn btn-primary" data-waitlist type="button">Get Updates</button></li>
+    </ul>
+    <button class="btn btn-primary nav-cta" data-waitlist type="button">Get Updates</button>
+    <button class="menu-btn" id="menuBtn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navLinks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  </div>
+</header>
+
+<main>
+<!-- HERO -->
+<section class="hero" id="home" aria-labelledby="hero-title">
+  <div class="hero-floor" aria-hidden="true"></div>
+  <div class="wrap hero-grid">
+    <div>
+      <img class="brand brand-hero" data-src-from="nav" alt="AutoAir" width="520" height="199">
+      <div class="eyebrow">Automatic tire pressure for EVs</div>
+      <h1 id="hero-title">Perfect Tire Pressure. <em>Automatically.</em></h1>
+      <p class="lead">Meet AutoAir: intelligent tire pressure technology designed to help keep your EV's tires at the right pressure, without the constant hassle of manual inflation.</p>
+      <div class="hero-cta">
+        <a class="btn btn-primary" href="#product">Discover AutoAir <svg aria-hidden="true"><use href="#i-arrow"/></svg></a>
+        <a class="btn btn-ghost" href="#technology">How It Works</a>
+      </div>
+    </div>
+    <div class="wheel-stage">
+      <svg viewBox="0 0 600 600" role="img" aria-label="Rendering of an electric vehicle wheel with blue lighting from the AutoAir system">
+        <defs>
+          <radialGradient id="h-glow" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#1677FF" stop-opacity=".45"/><stop offset=".6" stop-color="#1677FF" stop-opacity=".08"/><stop offset="1" stop-color="#1677FF" stop-opacity="0"/></radialGradient>
+          <radialGradient id="h-tire" cx=".42" cy=".36" r=".7"><stop offset="0" stop-color="#2A303A"/><stop offset=".55" stop-color="#14181F"/><stop offset="1" stop-color="#07090C"/></radialGradient>
+          <radialGradient id="h-rim" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#4B5461"/><stop offset=".5" stop-color="#232933"/><stop offset="1" stop-color="#11151B"/></radialGradient>
+          <linearGradient id="h-spoke" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#C9D0D9"/><stop offset=".5" stop-color="#6E7886"/><stop offset="1" stop-color="#2E3540"/></linearGradient>
+          <radialGradient id="h-disc" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#5A626E"/><stop offset=".85" stop-color="#3A414C"/><stop offset="1" stop-color="#2A3038"/></radialGradient>
+          <linearGradient id="h-fender" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A313B" stop-opacity="0"/><stop offset=".55" stop-color="#1E242D" stop-opacity=".7"/><stop offset="1" stop-color="#0B0E13"/></linearGradient><radialGradient id="h-fade" cx=".5" cy="1" r=".75"><stop offset=".55" stop-color="#fff"/><stop offset="1" stop-color="#000"/></radialGradient><mask id="h-mask"><rect x="-60" y="-60" width="720" height="200" fill="url(#h-fade)"/></mask>
+          <path id="h-text" d="M300 300 m-222 0 a222 222 0 1 1 444 0 a222 222 0 1 1 -444 0"/>
+          <g id="h-spokeshape"><path d="M292 248 L 270 122 Q 300 112 330 122 L 308 248 Z" fill="url(#h-spoke)"/><path d="M300 250 L 300 120" stroke="#0B0E13" stroke-width="5"/></g>
+        </defs>
+        <circle cx="300" cy="300" r="300" fill="url(#h-glow)"/>
+        <!-- body panel / fender arch -->
+        <path d="M-40 90 C 60 12 540 12 640 90 L 640 -40 L -40 -40 Z" fill="url(#h-fender)" mask="url(#h-mask)"/>
+        <path d="M-10 112 C 90 18 510 18 610 112" fill="none" stroke="#48B4FF" stroke-opacity=".5" stroke-width="1.5"/>
+        <!-- floor reflection -->
+        <ellipse cx="300" cy="582" rx="250" ry="16" fill="#000" opacity=".7"/>
+        <ellipse cx="300" cy="580" rx="200" ry="5" fill="#48B4FF" opacity=".25"/>
+        <!-- tire -->
+        <circle cx="300" cy="300" r="262" fill="url(#h-tire)"/>
+        <circle cx="300" cy="300" r="256" fill="none" stroke="#1C2129" stroke-width="12" stroke-dasharray="7 5"/>
+        <circle cx="300" cy="300" r="246" fill="none" stroke="#0A0C10" stroke-width="2"/>
+        <text font-family="Michroma, Arial, sans-serif" font-size="11" letter-spacing="6" fill="#3A424E"><textPath href="#h-text" startOffset="8%">AUTOAIR · PRESSURE MANAGED · EV 255/40 R20</textPath></text>
+        <!-- pressure scan ring -->
+        <g class="scan"><circle cx="300" cy="300" r="200" fill="none" stroke="url(#g-blue)" stroke-width="3" stroke-dasharray="120 1137" stroke-linecap="round"/></g>
+        <circle cx="300" cy="300" r="200" fill="none" stroke="#48B4FF" stroke-opacity=".18" stroke-width="1"/>
+        <!-- rim -->
+        <circle cx="300" cy="300" r="190" fill="url(#h-rim)"/>
+        <circle cx="300" cy="300" r="190" fill="none" stroke="url(#g-silver)" stroke-width="6"/>
+        <circle cx="300" cy="300" r="180" fill="none" stroke="#0B0E13" stroke-width="2"/>
+        <!-- brake disc + caliper -->
+        <circle cx="300" cy="300" r="132" fill="url(#h-disc)"/>
+        <g fill="#20262E"><circle cx="300" cy="190" r="3.5"/><circle cx="378" cy="222" r="3.5"/><circle cx="410" cy="300" r="3.5"/><circle cx="378" cy="378" r="3.5"/><circle cx="300" cy="410" r="3.5"/><circle cx="222" cy="378" r="3.5"/><circle cx="190" cy="300" r="3.5"/><circle cx="222" cy="222" r="3.5"/></g>
+        <path d="M368 186 A 136 136 0 0 1 428 252 L 404 262 A 110 110 0 0 0 356 208 Z" fill="#1677FF"/>
+        <path d="M370 192 A 128 128 0 0 1 420 248" fill="none" stroke="#9BD3FF" stroke-width="2" opacity=".7"/>
+        <!-- spokes (slow rotation) -->
+        <g class="spin">
+          <use href="#h-spokeshape"/>
+          <use href="#h-spokeshape" transform="rotate(72 300 300)"/>
+          <use href="#h-spokeshape" transform="rotate(144 300 300)"/>
+          <use href="#h-spokeshape" transform="rotate(216 300 300)"/>
+          <use href="#h-spokeshape" transform="rotate(288 300 300)"/>
+          <!-- AutoAir module on rim barrel -->
+          <g transform="rotate(36 300 300)"><rect x="284" y="124" width="32" height="18" rx="4" fill="#0D1015" stroke="#48B4FF" stroke-width="1.5"/><rect x="288" y="130" width="24" height="6" rx="2" fill="#48B4FF"/></g>
+          <circle cx="300" cy="300" r="56" fill="#1B2028" stroke="url(#g-silver)" stroke-width="4"/>
+          <circle cx="300" cy="300" r="40" fill="#0D1015"/>
+          <use href="#logo-mark" x="282" y="282" width="36" height="36" color="#E8ECF1"/>
+        </g>
+        <!-- HUD target arc -->
+        <path d="M 520 156 A 262 262 0 0 1 562 300" fill="none" stroke="#48B4FF" stroke-width="2" stroke-linecap="round"/>
+        <g stroke="#48B4FF" stroke-opacity=".6"><path d="M548 192l10-4M556 216l10-3M561 241l10-2M563 266l10-1"/></g>
+        <circle cx="562" cy="300" r="5" fill="#48B4FF"/>
+        <text x="574" y="304" font-family="Michroma, Arial, sans-serif" font-size="10" fill="#9BD3FF" letter-spacing="1">36</text>
+      </svg>
+      <div class="hud" role="group" aria-label="Illustrative pressure display">
+        <div class="hud-row"><span class="hud-k">TARGET PRESSURE</span><span class="hud-v">36 PSI</span></div>
+        <div class="hud-row"><span class="hud-k">CURRENT PRESSURE</span><span class="hud-v" id="heroCur">36 PSI</span></div>
+        <div class="hud-row"><span class="hud-k">STATUS</span><span class="hud-v ok" id="heroStatus"><i></i>PRESSURE MAINTAINED</span></div>
+        <div class="hud-bar"><i id="heroBar"></i></div>
+        <div class="hud-foot">Illustrative demonstration only. These are not verified product specifications.</div>
+      </div>
+    </div>
+  </div>
+  <div class="hero-strip">
+    <div class="wrap">
+      <div class="s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><div><b>Monitors continuously</b>Compares pressure with your target</div></div>
+      <div class="s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 12h10M11 8l4 4-4 4M18 6v12"/></svg><div><b>Inflates when needed</b>A built-in pump adds air below target</div></div>
+      <div class="s"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M7 17h10l2-5-3-5H8L5 12z"/><circle cx="9" cy="17" r="2"/><circle cx="15" cy="17" r="2"/></svg><div><b>Designed for EVs</b>Draws on the vehicle's electrical power</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- MISSION -->
+<section class="band mission" id="mission" aria-labelledby="mission-title">
+  <div class="wrap rv">
+    <div class="eyebrow" id="mission-title">Our Mission</div>
+    <blockquote>To take the hassle out of tire care for every EV driver &mdash; building intelligent, automatic inflation technology that keeps tires at the right pressure, so every drive is <em>safer, more efficient and always ready.</em></blockquote>
+    <div class="pillars">
+      <div class="pillar"><b>Effortless</b><span>No gauges, hoses or gas-station compressors. Proper pressure should simply take care of itself.</span></div>
+      <div class="pillar"><b>Safer</b><span>Correct pressure helps support handling, braking and confident control on every trip.</span></div>
+      <div class="pillar"><b>Efficient</b><span>Well-inflated tires help protect range and tire life, getting more from every charge.</span></div>
+    </div>
+    <div class="vision">
+      <div class="eyebrow" id="vision-title">Our Vision</div>
+      <blockquote>A world where no driver ever has to think about tire pressure &mdash; where every electric vehicle <em>takes care of its own tires</em>, making the road safer and every mile more efficient.</blockquote>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCT EXPLANATION -->
+<section class="band light" id="product" aria-labelledby="product-title">
+  <div class="wrap split">
+    <div class="product-art rv">
+      <svg viewBox="-10 0 430 260" role="img" aria-label="Concept rendering of the AutoAir pump module"><use href="#pump"/></svg>
+      <span class="tag">AUTOAIR PUMP MODULE · CONCEPT RENDERING</span>
+    </div>
+    <div class="rv">
+      <div class="eyebrow">The problem</div>
+      <h2 class="h2" id="product-title">Your Tires. Always Ready.</h2>
+      <p class="lead">Tires lose pressure gradually. Keeping them right means checking the gauge, finding a compressor, connecting a hose and doing it all again a few weeks later. Many drivers put it off. Yet keeping the recommended pressure helps support tire life, handling and energy efficiency.</p>
+      <p class="lead">AutoAir is a compact electric pumping system designed to integrate with an EV's tire-pressure system. It is designed to top up air on its own, so the tires stay ready.</p>
+      <div class="steps3">
+        <div class="step3"><span class="n">01</span><div><h3>Intelligent Monitoring</h3><p>The system monitors tire pressure and compares it with the vehicle's target pressure.</p></div></div>
+        <div class="step3"><span class="n">02</span><div><h3>Automatic Inflation</h3><p>When pressure drops below the target, the electric pump is designed to add air automatically.</p></div></div>
+        <div class="step3"><span class="n">03</span><div><h3>Consistent Pressure</h3><p>The system is designed to help maintain the desired pressure without requiring drivers to repeatedly inflate their tires manually.</p></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="band dark" id="technology" aria-labelledby="tech-title">
+  <div class="wrap">
+    <div class="eyebrow">The technology</div>
+    <h2 class="h2" id="tech-title">How AutoAir is designed to work.</h2>
+    <p class="lead">Scroll through the proposed system. Each step lights up the part of the wheel involved. AutoAir is a concept in development, not a commercially available or fully validated product.</p>
+    <div class="how">
+      <div class="how-visual">
+        <svg class="cut" id="cut" data-step="1" viewBox="0 0 560 520" role="img" aria-label="Cutaway diagram of a wheel showing the AutoAir power supply, pressure sensor, controller, pump and tire air chamber">
+          <defs>
+            <clipPath id="cut-q"><path d="M280 260 L 280 0 L 560 0 L 560 260 Z"/></clipPath>
+            <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#48B4FF"/></marker>
+          </defs>
+          <!-- tire -->
+          <circle cx="280" cy="260" r="225" fill="#14181F"/>
+          <circle cx="280" cy="260" r="219" fill="none" stroke="#1F252E" stroke-width="10" stroke-dasharray="6 5"/>
+          <!-- cutaway quadrant reveals the air chamber -->
+          <g clip-path="url(#cut-q)">
+            <circle cx="280" cy="260" r="210" fill="#0B0F15"/>
+            <circle class="chamber s5 part" cx="280" cy="260" r="196" fill="#1677FF" fill-opacity=".14" stroke="#48B4FF" stroke-opacity=".5" stroke-dasharray="3 4"/>
+            <circle cx="280" cy="260" r="150" fill="#0B0F15"/>
+          </g>
+          <path d="M280 35 V 110 M 505 260 H 430" stroke="#48B4FF" stroke-opacity=".5" stroke-width="1"/>
+          <!-- rim -->
+          <circle cx="280" cy="260" r="150" fill="#1E242D" stroke="#9AA4B2" stroke-width="3"/>
+          <circle cx="280" cy="260" r="138" fill="#161B22"/>
+          <g stroke="#3A424E" stroke-width="16" stroke-linecap="round">
+            <path d="M280 260 L 280 136"/><path d="M280 260 L 398 222"/><path d="M280 260 L 353 360"/><path d="M280 260 L 207 360"/><path d="M280 260 L 162 222"/>
+          </g>
+          <!-- 1: vehicle power via hub -->
+          <g class="part s1">
+            <path d="M 20 470 C 120 470 170 380 230 300" fill="none" stroke="#48B4FF" stroke-width="3" stroke-linecap="round"/>
+            <path class="flow" d="M 20 470 C 120 470 170 380 230 300" fill="none" stroke="#BFE6FF" stroke-width="3"/>
+            <circle cx="280" cy="260" r="46" fill="none" stroke="#48B4FF" stroke-width="3" stroke-dasharray="5 4"/>
+            <text class="lbl" x="22" y="456">1 · VEHICLE POWER</text>
+            <text class="lbl-s" x="22" y="492">Supplied through the hub (proposed)</text>
+          </g>
+          <circle cx="280" cy="260" r="34" fill="#232A33" stroke="#9AA4B2" stroke-width="2"/>
+          <!-- 3: controller near hub -->
+          <g class="part s3">
+            <rect x="300" y="196" width="46" height="30" rx="5" fill="#0D1015" stroke="#48B4FF" stroke-width="2" transform="rotate(-18 323 211)"/>
+            <path d="M309 206h28M309 213h18" stroke="#48B4FF" stroke-width="2" transform="rotate(-18 323 211)"/>
+            <path d="M346 196 L 420 120 L 548 120" fill="none" stroke="#48B4FF" stroke-width="1"/>
+            <text class="lbl" x="424" y="112">3 · CONTROLLER</text>
+            <text class="lbl-s" x="424" y="136">Decides when to inflate</text>
+          </g>
+          <!-- 2: pressure sensor at valve -->
+          <g class="part s2">
+            <circle cx="390" cy="156" r="9" fill="#0D1015" stroke="#48B4FF" stroke-width="3"/>
+            <circle cx="390" cy="156" r="3" fill="#48B4FF"/>
+            <path d="M398 150 L 440 70 L 548 70" fill="none" stroke="#48B4FF" stroke-width="1"/>
+            <text class="lbl" x="444" y="62">2 · PRESSURE SENSOR</text>
+            <text class="lbl-s" x="444" y="86">Detects pressure drop</text>
+          </g>
+          <!-- 4: pump on rim barrel + air path -->
+          <g class="part s4">
+            <rect x="372" y="290" width="58" height="30" rx="6" fill="#1B2028" stroke="#48B4FF" stroke-width="2" transform="rotate(-62 401 305)"/>
+            <rect x="380" y="299" width="42" height="10" rx="3" fill="#1677FF" transform="rotate(-62 401 305)"/>
+            <path class="flow" d="M 416 276 C 440 250 450 230 452 200" fill="none" stroke="#BFE6FF" stroke-width="3" marker-end="url(#arr)"/>
+            <path d="M 430 320 L 470 360 L 548 360" fill="none" stroke="#48B4FF" stroke-width="1"/>
+            <text class="lbl" x="452" y="352">4 · ELECTRIC PUMP</text>
+            <text class="lbl-s" x="452" y="376">Adds air to the tire</text>
+          </g>
+          <!-- 5: target reached -->
+          <g class="part s5">
+            <rect x="404" y="410" width="132" height="48" rx="10" fill="#0D1015" stroke="#48B4FF" stroke-width="1.5"/>
+            <text class="lbl" x="418" y="432">5 · TARGET MET</text>
+            <text class="lbl-s" x="418" y="449">36 PSI · pump stops</text>
+          </g>
+          <text x="280" y="512" text-anchor="middle" class="lbl-s">Air chamber shown in the cutaway quadrant</text>
+        </svg>
+        <div class="cap"><span>CONCEPT DIAGRAM · NOT TO SCALE</span><span id="cutCap">STEP 1 OF 5</span></div>
+      </div>
+      <div class="how-steps" id="howSteps">
+        <div class="hstep on" data-step="1"><span class="k">STEP 01 · POWER</span><h3>The vehicle supplies electrical power.</h3><p>An EV already carries a large battery. AutoAir is designed to draw a small amount of that power through the wheel hub, so the system never needs its own charging.</p></div>
+        <div class="hstep" data-step="2"><span class="k">STEP 02 · SENSE</span><h3>A pressure sensor detects the drop.</h3><p>A sensor at the valve reads the air pressure inside the tire. Normal driving, temperature changes and time all cause slow pressure loss, and the sensor notices it.</p></div>
+        <div class="hstep" data-step="3"><span class="k">STEP 03 · DECIDE</span><h3>A controller decides when to act.</h3><p>The control system compares the reading with the target pressure set for the vehicle. If the tire is below target, it signals the pump to start.</p></div>
+        <div class="hstep" data-step="4"><span class="k">STEP 04 · INFLATE</span><h3>A compact pump adds air.</h3><p>A small electric pump mounted inside the wheel pushes air into the tire through a one-way valve, raising the pressure gradually.</p></div>
+        <div class="hstep" data-step="5"><span class="k">STEP 05 · STOP</span><h3>It stops at the target.</h3><p>When the sensor confirms the target pressure, the controller switches the pump off and goes back to monitoring. Nothing for the driver to do.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFITS -->
+<section class="band mist" id="benefits" aria-labelledby="benefits-title">
+  <div class="wrap">
+    <div class="eyebrow">Benefits</div>
+    <h2 class="h2" id="benefits-title">A Smarter Way to Stay Inflated.</h2>
+    <div class="cards4">
+      <article class="fcard rv"><div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5l3 3M4 20l7.5-7.5"/><path d="M13 5l6 6-2.5 2.5-6-6z"/><path d="M4 4l16 16" opacity=".35"/></svg></div><h3>Less Manual Maintenance</h3><p>Reduce the need to repeatedly connect an external air compressor to your tires.</p></article>
+      <article class="fcard rv"><div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M4.5 17a8.5 8.5 0 1 1 15 0"/><path d="M12 13l4-5"/><circle cx="12" cy="13.5" r="1.4" fill="currentColor"/></svg></div><h3>Pressure Monitoring</h3><p>Keep track of tire pressure and the system's status.</p></article>
+      <article class="fcard rv"><div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3L6 13h5l-1 8 7-10h-5z"/></svg></div><h3>Designed for EVs</h3><p>Developed around the needs of modern electric vehicles.</p></article>
+      <article class="fcard rv"><div class="ficon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/><path d="M12 3.5V9M12 15v5.5M3.5 12H9M15 12h5.5"/></svg></div><h3>Convenience on Every Drive</h3><p>Spend less time worrying about routine tire inflation.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- INTERACTIVE DEMO -->
+<section class="band graphite" id="demo" aria-labelledby="demo-title">
+  <div class="wrap">
+    <div class="eyebrow">Interactive demonstration</div>
+    <h2 class="h2" id="demo-title">See AutoAir in action.</h2>
+    <p class="lead">Set a starting pressure and a target, then activate the system to watch how AutoAir is intended to bring the tire up to pressure.</p>
+    <div class="demo">
+      <div class="panel" id="gaugePanel">
+        <div class="gauge-top"><span class="sim-badge"><svg width="12" height="12" aria-hidden="true"><use href="#i-info"/></svg>SIMULATION · NOT CONNECTED TO A REAL TIRE</span><img class="brand brand-gauge" data-src-from="nav" alt="AutoAir" width="520" height="199"></div>
+        <div class="gauge-wrap">
+          <svg viewBox="0 0 400 340" aria-hidden="true">
+            <defs>
+              <linearGradient id="gauge-grad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1677FF"/><stop offset="1" stop-color="#48B4FF"/></linearGradient>
+              <filter id="gauge-glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+            </defs>
+            <g id="gTicks"></g>
+            <path id="gTrack" fill="none" stroke="#232A35" stroke-width="16" stroke-linecap="round"/>
+            <path id="gArc" fill="none" stroke="url(#gauge-grad)" stroke-width="16" stroke-linecap="round" filter="url(#gauge-glow)"/>
+            <g id="gTarget"><path d="M0 -7 L7 0 L0 7 L-7 0Z" fill="#fff"/></g>
+          </svg>
+          <div class="g-read"><div class="val" id="gVal">28.0</div><div class="unit">PSI</div><div class="tgt">Target <b id="gTgt">36</b> PSI</div></div>
+        </div>
+        <div class="status" id="status" role="status" aria-live="polite"><i></i><span id="statusText">Monitoring · below target</span></div>
+      </div>
+      <div class="panel ctrl">
+        <h3>Simulation controls</h3>
+        <div class="field">
+          <div class="field-top"><label for="startP">Starting pressure</label><output id="startOut" for="startP">28<small>PSI</small></output></div>
+          <input type="range" id="startP" min="20" max="40" step="1" value="28">
+          <div class="scale"><span>20</span><span>40 PSI</span></div>
+        </div>
+        <div class="field">
+          <div class="field-top"><label for="targetP">Target pressure</label><output id="targetOut" for="targetP">36<small>PSI</small></output></div>
+          <input type="range" id="targetP" min="30" max="44" step="1" value="36">
+          <div class="scale"><span>30</span><span>44 PSI</span></div>
+        </div>
+        <div class="ctrl-btns">
+          <button class="btn btn-primary" id="activate" type="button">Activate AutoAir</button>
+          <button class="btn btn-ghost" id="reset" type="button">Reset</button>
+        </div>
+        <div class="pump-viz" id="pumpViz">
+          <svg viewBox="0 0 120 46" aria-hidden="true">
+            <rect x="2" y="12" width="40" height="22" rx="5" fill="#1B2028" stroke="#3A424E"/>
+            <rect class="pump-led" x="8" y="19" width="28" height="8" rx="3" fill="#2A3240"/>
+            <path d="M42 23h70" stroke="#232A35" stroke-width="8" stroke-linecap="round"/>
+            <circle class="air" cx="50" cy="23" r="3" fill="#48B4FF"/>
+            <circle class="air" cx="50" cy="23" r="3" fill="#48B4FF"/>
+            <circle class="air" cx="50" cy="23" r="3" fill="#48B4FF"/>
+            <circle cx="112" cy="23" r="9" fill="none" stroke="#3A424E" stroke-width="3"/>
+          </svg>
+          <p id="pumpText">Pump idle. Press Activate to start the simulated system.</p>
+        </div>
+        <div class="timeline" aria-hidden="true">
+          <div class="tl on" data-tl="0"><b>01</b>Monitoring</div>
+          <div class="tl" data-tl="1"><b>02</b>Below target</div>
+          <div class="tl" data-tl="2"><b>03</b>Inflating</div>
+          <div class="tl" data-tl="3"><b>04</b>Target reached</div>
+        </div>
+        <p class="note"><svg width="14" height="14" aria-hidden="true"><use href="#i-info"/></svg>Simulated behavior of the proposed technology, sped up for demonstration. Real inflation would be gradual. The concept adds air only. It does not release air when pressure is above target.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PRODUCT DESIGN -->
+<section class="band light" id="design" aria-labelledby="design-title">
+  <div class="wrap">
+    <div class="eyebrow">Product design</div>
+    <h2 class="h2" id="design-title">Small Technology. Big Convenience.</h2>
+    <div class="design-grid">
+      <div class="render rv">
+        <span class="tag">CONCEPT RENDERING</span>
+        <svg viewBox="-20 0 440 270" role="img" aria-label="Three-dimensional style rendering of the AutoAir pump concept in black, silver and electric blue"><use href="#pump"/></svg>
+      </div>
+      <ul class="spec-list rv">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="4" y="7" width="16" height="10" rx="3"/><path d="M8 7v10M12 7v10"/></svg><div><b>Compact, space-efficient</b><span>Sized to sit on the wheel's rim barrel, inside the tire.</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l8 4v5c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V7z"/></svg><div><b>Automotive-grade materials</b><span>Intended to withstand heat, vibration, moisture and road debris.</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M9 3v5M15 3v5M7 8h10v4a5 5 0 0 1-10 0zM12 17v4"/></svg><div><b>Electrical connection</b><span>Powered by the vehicle through a hub connection, not a separate battery.</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M5 17a8 8 0 1 1 14 0"/><path d="M12 13l3-4"/></svg><div><b>Sensor and inflation in one module</b><span>A pressure sensor, controller and micro-compressor work as one unit.</span></div></li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3"/></svg><div><b>Built for wheel integration</b><span>Designed with an EV's wheel and tire-pressure system in mind.</span></div></li>
+      </ul>
+    </div>
+    <div class="exploded rv">
+      <div class="exploded-head"><h3>How the components could work together</h3><span class="note"><svg width="14" height="14" aria-hidden="true"><use href="#i-info"/></svg>Concept illustration. Final dimensions, power requirements and certifications have not been determined.</span></div>
+      <div class="diagram-scroll">
+        <svg viewBox="0 0 900 300" role="img" aria-label="Exploded technical illustration: power connector, control board, pressure sensor, micro-compressor, housing, and one-way valve, connected by power, signal and air paths">
+          <defs><marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#1677FF"/></marker></defs>
+          <path d="M40 150 H 860" stroke="#E8ECF1" stroke-width="2" stroke-dasharray="2 6"/>
+          <!-- A connector -->
+          <g transform="translate(40 110)"><rect width="70" height="80" rx="10" fill="#171B22"/><rect x="14" y="20" width="12" height="40" rx="3" fill="#1677FF"/><rect x="34" y="20" width="12" height="40" rx="3" fill="#3A414C"/></g>
+          <!-- B control board -->
+          <g transform="translate(170 100)"><rect width="110" height="100" rx="8" fill="#0E3A2E" opacity=".0"/><rect width="110" height="100" rx="8" fill="#1B2028"/><rect x="12" y="14" width="34" height="34" rx="4" fill="#2A313B" stroke="#48B4FF"/><path d="M60 22h36M60 34h28M60 46h36M14 66h82M14 78h60" stroke="#3A414C" stroke-width="3"/><circle cx="94" cy="84" r="4" fill="#48B4FF"/></g>
+          <!-- C sensor -->
+          <g transform="translate(340 115)"><rect width="70" height="70" rx="12" fill="url(#g-silver)"/><circle cx="35" cy="35" r="18" fill="#1B2028" stroke="#8E98A6"/><circle cx="35" cy="35" r="7" fill="#48B4FF"/></g>
+          <!-- D compressor -->
+          <g transform="translate(470 95)"><rect width="140" height="110" rx="14" fill="url(#g-body)"/><g stroke="#2E3540" stroke-width="3"><path d="M24 8v94M44 8v94M64 8v94M84 8v94M104 8v94"/></g><rect x="120" y="8" width="8" height="94" fill="#1677FF"/></g>
+          <!-- E housing (outline) -->
+          <g transform="translate(450 70)"><rect width="180" height="160" rx="22" fill="none" stroke="#8E98A6" stroke-width="1.5" stroke-dasharray="6 5"/></g>
+          <!-- F valve -->
+          <g transform="translate(690 125)"><path d="M0 10h60a15 15 0 0 1 0 30H0z" fill="url(#g-silver)"/><path d="M20 25h30" stroke="#1677FF" stroke-width="3" marker-end="url(#ar2)"/></g>
+          <!-- flows -->
+          <path d="M112 150 H 166" stroke="#1677FF" stroke-width="3" marker-end="url(#ar2)"/>
+          <path d="M282 150 H 336" stroke="#48B4FF" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar2)"/>
+          <path d="M412 150 H 466" stroke="#48B4FF" stroke-width="2" stroke-dasharray="5 4" marker-end="url(#ar2)"/>
+          <path d="M612 150 H 686" stroke="#1677FF" stroke-width="3" marker-end="url(#ar2)"/>
+          <path d="M772 150 H 850" stroke="#1677FF" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#ar2)"/>
+          <!-- labels -->
+          <g text-anchor="middle">
+            <text class="ex-lbl" x="75" y="222">A · CONNECTOR</text><text class="ex-sub" x="75" y="240">Vehicle power in</text>
+            <text class="ex-lbl" x="225" y="222">B · CONTROL BOARD</text><text class="ex-sub" x="225" y="240">Compares to target</text>
+            <text class="ex-lbl" x="375" y="76">C · PRESSURE SENSOR</text><text class="ex-sub" x="375" y="94">Reads tire pressure</text>
+            <text class="ex-lbl" x="540" y="258">D · MICRO-COMPRESSOR</text><text class="ex-sub" x="540" y="276">Inside sealed housing (E)</text>
+            <text class="ex-lbl" x="728" y="104">F · ONE-WAY VALVE</text><text class="ex-sub" x="728" y="198">Air into the tire</text>
+            <text class="ex-sub" x="812" y="136">to tire</text>
+          </g>
+          <g font-family="Manrope, Arial, sans-serif" font-size="11" fill="#5E6876">
+            <path d="M40 290h22" stroke="#1677FF" stroke-width="3"/><text x="68" y="294">Power / air path</text>
+            <path d="M190 290h22" stroke="#48B4FF" stroke-width="2" stroke-dasharray="5 4"/><text x="218" y="294">Data signal</text>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- WHY AUTOAIR -->
+<section class="band mist" id="why" aria-labelledby="why-title">
+  <div class="wrap">
+    <div class="eyebrow">Why AutoAir?</div>
+    <h2 class="h2" id="why-title">From a routine chore to an automatic process.</h2>
+    <div class="compare rv">
+      <div class="cside old">
+        <span class="tagline">THE TRADITIONAL APPROACH</span>
+        <h3>Five steps, every few weeks.</h3>
+        <ol class="clist">
+          <li><span class="ix">1</span>Manually check tire pressure</li>
+          <li><span class="ix">2</span>Find an air compressor</li>
+          <li><span class="ix">3</span>Connect the hose</li>
+          <li><span class="ix">4</span>Inflate the tire</li>
+          <li><span class="ix">5</span>Repeat when pressure drops again</li>
+        </ol>
+        <span class="repeat"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 12a8 8 0 0 1 14-5.3M20 12a8 8 0 0 1-14 5.3M18 3v4h-4M6 21v-4h4"/></svg>And again, and again.</span>
+      </div>
+      <div class="cside new">
+        <span class="tagline">THE AUTOAIR CONCEPT</span>
+        <h3>Handled while you drive.</h3>
+        <ul class="clist">
+          <li><span class="ix"><svg aria-hidden="true"><use href="#i-check"/></svg></span>Automatic pressure monitoring</li>
+          <li><span class="ix"><svg aria-hidden="true"><use href="#i-check"/></svg></span>Inflation when needed</li>
+          <li><span class="ix"><svg aria-hidden="true"><use href="#i-check"/></svg></span>Less routine manual effort</li>
+          <li><span class="ix"><svg aria-hidden="true"><use href="#i-check"/></svg></span>Convenient pressure maintenance</li>
+        </ul>
+      </div>
+    </div>
+    <p class="note compare-note"><svg width="14" height="14" aria-hidden="true"><use href="#i-info"/></svg>AutoAir is intended to reduce routine manual inflation. It does not replace regular tire inspections, puncture repairs, tread checks or other tire maintenance.</p>
+  </div>
+</section>
+
+<!-- SUSTAINABILITY -->
+<section class="band dark" id="efficiency" aria-labelledby="eco-title">
+  <div class="wrap eco">
+    <div class="rv">
+      <div class="eyebrow">Efficiency</div>
+      <h2 class="h2" id="eco-title">Better Pressure. Smarter Driving.</h2>
+      <p class="lead">An underinflated tire flexes more as it rolls, which increases rolling resistance. Rolling resistance takes energy, and in an EV that energy comes from the battery. Keeping tires at their recommended pressure helps avoid that unnecessary loss.</p>
+      <div class="eco-points">
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="7" width="16" height="10" rx="2"/><path d="M21 10v4M7 10v4M11 10v4"/></svg><div><b>Support EV efficiency</b><span>Correct pressure helps the vehicle use its energy as intended.</span></div></div>
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="8.5"/><path d="M12 7v5l3 3"/></svg><div><b>Support tire life</b><span>Tires kept at the right pressure tend to wear more evenly.</span></div></div>
+        <div><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 18c4-1 6-4 8-8s4-6 8-6c0 6-3 14-12 14"/><path d="M4 21c2-4 4-6 7-8"/></svg><div><b>Smarter maintenance</b><span>Small, timely top-ups instead of waiting until pressure is noticeably low.</span></div></div>
+      </div>
+      <p class="note" style="margin-top:26px"><svg width="14" height="14" aria-hidden="true"><use href="#i-info"/></svg>AutoAir has not yet been tested for efficiency or range gains, and we don't quote figures we can't support.</p>
+    </div>
+    <div class="eco-art rv">
+      <svg viewBox="0 0 640 360" role="img" aria-label="Line drawing of an electric vehicle with blue energy lines flowing from the battery to the wheels">
+        <defs><linearGradient id="eco-g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1677FF" stop-opacity="0"/><stop offset=".5" stop-color="#48B4FF"/><stop offset="1" stop-color="#1677FF" stop-opacity="0"/></linearGradient></defs>
+        <ellipse cx="320" cy="300" rx="290" ry="18" fill="#1677FF" opacity=".12"/>
+        <path d="M40 300 H 600" stroke="url(#eco-g)" stroke-width="1.5"/>
+        <!-- car body -->
+        <path d="M70 262 C 72 232 96 214 140 208 L 220 198 C 258 160 300 138 368 136 C 430 136 470 160 510 196 L 556 204 C 584 210 598 228 598 254 L 598 268 L 548 268 A 52 52 0 0 0 444 268 L 214 268 A 52 52 0 0 0 110 268 Z" fill="#0E1218" stroke="#3A4452" stroke-width="2"/>
+        <path d="M232 196 C 268 164 306 150 366 148 C 418 148 452 166 486 196 Z" fill="#141A23" stroke="#3A4452" stroke-width="1.5"/>
+        <path d="M352 150 V 196" stroke="#3A4452" stroke-width="1.5"/>
+        <path d="M86 236 H 120 M 560 228 H 590" stroke="#48B4FF" stroke-width="3" stroke-linecap="round"/>
+        <!-- battery pack -->
+        <rect x="200" y="244" width="250" height="16" rx="5" fill="#0B1A33" stroke="#1677FF" stroke-width="1.5"/>
+        <g fill="#1677FF" opacity=".6"><rect x="210" y="248" width="26" height="8" rx="2"/><rect x="242" y="248" width="26" height="8" rx="2"/><rect x="274" y="248" width="26" height="8" rx="2"/><rect x="306" y="248" width="26" height="8" rx="2"/><rect x="338" y="248" width="26" height="8" rx="2"/><rect x="370" y="248" width="26" height="8" rx="2"/><rect x="402" y="248" width="26" height="8" rx="2"/></g>
+        <!-- energy lines to wheels -->
+        <path class="energy" d="M 210 252 C 190 252 176 262 162 278" fill="none" stroke="#48B4FF" stroke-width="2.5"/>
+        <path class="energy" d="M 440 252 C 460 252 480 262 496 278" fill="none" stroke="#48B4FF" stroke-width="2.5"/>
+        <path class="energy" d="M 325 244 C 325 200 325 180 325 168" fill="none" stroke="#48B4FF" stroke-width="1.5" opacity=".5"/>
+        <!-- wheels -->
+        <g><circle cx="162" cy="278" r="44" fill="#0B0E13" stroke="#2A313B" stroke-width="8"/><circle cx="162" cy="278" r="26" fill="#1B2028" stroke="#8E98A6" stroke-width="2"/><circle cx="162" cy="278" r="34" fill="none" stroke="#48B4FF" stroke-width="2" stroke-dasharray="40 174" class="energy"/><circle cx="162" cy="278" r="6" fill="#48B4FF"/></g>
+        <g><circle cx="496" cy="278" r="44" fill="#0B0E13" stroke="#2A313B" stroke-width="8"/><circle cx="496" cy="278" r="26" fill="#1B2028" stroke="#8E98A6" stroke-width="2"/><circle cx="496" cy="278" r="34" fill="none" stroke="#48B4FF" stroke-width="2" stroke-dasharray="40 174" class="energy"/><circle cx="496" cy="278" r="6" fill="#48B4FF"/></g>
+        <!-- callouts -->
+        <g font-family="Michroma, Arial, sans-serif" font-size="9.5" letter-spacing="1.2" fill="#9BD3FF">
+          <path d="M162 222 V 120 H 120" stroke="#48B4FF" stroke-opacity=".5" fill="none"/><text x="40" y="112">TARGET PRESSURE</text><text x="40" y="128" fill="#8B95A5" font-family="Manrope, Arial" font-size="12" letter-spacing="0">kept by AutoAir</text>
+          <path d="M325 260 V 330" stroke="#48B4FF" stroke-opacity=".5" fill="none"/><text x="335" y="336">BATTERY ENERGY</text>
+          <path d="M496 222 V 90 H 540" stroke="#48B4FF" stroke-opacity=".5" fill="none"/><text x="470" y="82">LESS ROLLING RESISTANCE</text>
+        </g>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="band light" id="about" aria-labelledby="about-title">
+  <div class="wrap">
+    <div class="about">
+      <div>
+        <div class="eyebrow">About us</div>
+        <h2 class="h2" id="about-title">Rethinking the Everyday Drive.</h2>
+        <img class="brand brand-about" data-src-from="nav" alt="AutoAir" width="520" height="199">
+      </div>
+      <p class="quote rv">AutoAir is built around a simple idea: vehicle maintenance should be smarter, easier, and more convenient. By exploring automatic tire pressure management for electric vehicles, we aim to make routine tire care less of a chore and help drivers stay focused on the road ahead.</p>
+    </div>
+    <div class="values rv">
+      <div><b>Solve a real problem</b><span>Tire pressure is something every driver deals with and few enjoy. We start there.</span></div>
+      <div><b>Build for the EV era</b><span>Electric vehicles bring power to every wheel. We design around what that makes possible.</span></div>
+      <div><b>Earn trust with evidence</b><span>We share what is proven and label what is still a concept, as we do throughout this site.</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="band cta" aria-labelledby="cta-title">
+  <div class="cta-ring" aria-hidden="true"></div><div class="cta-ring r2" aria-hidden="true"></div>
+  <div class="wrap" style="position:relative">
+    <img class="brand brand-cta" data-src-from="nav" alt="AutoAir" width="520" height="199">
+    <div class="eyebrow">Join the waitlist</div>
+    <h2 id="cta-title">The Future of Tire Care Starts Here.</h2>
+    <p class="lead">Discover a smarter approach to maintaining your vehicle's tire pressure.</p>
+    <button class="btn btn-primary" type="button" data-waitlist>Join the AutoAir Waitlist <svg aria-hidden="true"><use href="#i-arrow"/></svg></button>
+  </div>
+</section>
+</main>
+
+<footer id="contact">
+  <div class="wrap">
+    <div class="foot">
+      <div>
+        <a class="logo" href="#home" aria-label="AutoAir home"><img class="logo-img logo-foot" data-src-from="nav" alt="AutoAir" width="520" height="199"></a>
+        <p>AutoAir is developing an automatic tire pressure concept for electric vehicles, designed to make routine tire care effortless.</p>
+      </div>
+      <div><h4>EXPLORE</h4><ul><li><a href="#home">Home</a></li><li><a href="#technology">The Technology</a></li><li><a href="#benefits">Benefits</a></li><li><a href="#demo">Interactive Demo</a></li><li><a href="#about">About Us</a></li></ul></div>
+      <div><h4>CONTACT</h4><ul><li><span class="ph">Email address coming soon</span></li><li><span class="ph">Phone number coming soon</span></li><li><span class="ph">Office location to be announced</span></li><li><button class="btn btn-ghost" type="button" data-waitlist style="padding:8px 16px;font-size:13.5px;margin-top:4px">Get Updates</button></li></ul></div>
+      <div><h4>FOLLOW</h4>
+        <div class="socials" aria-label="Social media accounts coming soon">
+          <span title="LinkedIn (coming soon)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 9h3v10H5zM6.5 4.5a1.75 1.75 0 1 1 0 3.5 1.75 1.75 0 0 1 0-3.5zM10 9h3v1.5c.5-.9 1.7-1.8 3.4-1.8 3 0 3.6 2 3.6 4.5V19h-3v-5.2c0-1.2 0-2.7-1.7-2.7S13 12.4 13 13.7V19h-3z"/></svg></span>
+          <span title="Instagram (coming soon)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"/><circle cx="12" cy="12" r="3.6"/><circle cx="17" cy="7" r=".8" fill="currentColor"/></svg></span>
+          <span title="X (coming soon)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.5 4h2.8l-6.1 7 7.2 9h-5.6l-4.4-5.6L6.3 20H3.5l6.5-7.5L3.1 4h5.7l4 5.2zm-1 14.4h1.6L7.6 5.5H5.9z"/></svg></span>
+          <span title="YouTube (coming soon)"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21.6 8.2a2.6 2.6 0 0 0-1.8-1.8C18.2 6 12 6 12 6s-6.2 0-7.8.4A2.6 2.6 0 0 0 2.4 8.2 27 27 0 0 0 2 12a27 27 0 0 0 .4 3.8 2.6 2.6 0 0 0 1.8 1.8C5.8 18 12 18 12 18s6.2 0 7.8-.4a2.6 2.6 0 0 0 1.8-1.8A27 27 0 0 0 22 12a27 27 0 0 0-.4-3.8zM10 15V9l5.2 3z"/></svg></span>
+        </div>
+        <p style="font-size:13px;color:var(--steel)">Social channels launching soon.</p>
+      </div>
+    </div>
+    <div class="foot-bottom"><span>© <span id="yr">2026</span> AutoAir. All rights reserved.</span><span>AutoAir is a product concept in development. Illustrations and demonstrations are not final specifications.</span></div>
+  </div>
+</footer>
+
+<!-- Waitlist modal -->
+<div class="modal" id="modal" aria-hidden="true">
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="wl-title">
+    <button class="close" type="button" id="closeModal" aria-label="Close"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <div id="wlForm">
+      <img class="brand brand-modal" data-src-from="nav" alt="AutoAir" width="520" height="199">
+      <h3 id="wl-title">Join the AutoAir Waitlist</h3>
+      <p>Be first to hear about prototypes, testing and launch plans.</p>
+      <form id="waitForm" novalidate>
+        <div class="fgroup"><label for="wlName">Full name</label><input id="wlName" name="name" type="text" autocomplete="name" placeholder="Alex Morgan" aria-describedby="nameErr"><div class="err" id="nameErr"></div></div>
+        <div class="fgroup"><label for="wlEmail">Email address</label><input id="wlEmail" name="email" type="email" autocomplete="email" placeholder="alex@example.com" aria-describedby="emailErr"><div class="err" id="emailErr"></div></div>
+        <button class="btn btn-primary" type="submit">Join the Waitlist</button>
+        <p class="form-note">This preview site is not yet connected to a signup service, so your details will not be sent or stored.</p>
+      </form>
+    </div>
+    <div class="confirm" id="wlDone" hidden>
+      <div class="tick"><svg aria-hidden="true"><use href="#i-check"/></svg></div>
+      <h3 id="doneTitle">You're on the list.</h3>
+      <p id="doneText"></p>
+      <button class="btn btn-ghost" type="button" id="doneClose">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  document.documentElement.classList.add('js');
+  const navLogo = document.querySelector('.logo-img:not(.logo-foot)'); document.querySelectorAll('[data-src-from="nav"]').forEach(i => { i.src = navLogo.src; });
+  $('#yr').textContent = new Date().getFullYear();
+
+  /* Nav: solid on scroll, mobile menu, active link */
+  const nav = $('#nav'), menuBtn = $('#menuBtn');
+  const onScroll = () => nav.classList.toggle('solid', scrollY > 20 || nav.classList.contains('open'));
+  addEventListener('scroll', onScroll, { passive: true }); onScroll();
+  menuBtn.addEventListener('click', () => { const o = nav.classList.toggle('open'); menuBtn.setAttribute('aria-expanded', o); menuBtn.setAttribute('aria-label', o ? 'Close menu' : 'Open menu'); onScroll(); });
+  $$('#navLinks a').forEach(a => a.addEventListener('click', () => { nav.classList.remove('open'); menuBtn.setAttribute('aria-expanded', 'false'); onScroll(); }));
+  const sections = ['home', 'technology', 'benefits', 'about', 'contact'].map(id => document.getElementById(id));
+  const navObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) $$('#navLinks a').forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id)); }), { rootMargin: '-45% 0px -50% 0px' });
+  sections.forEach(s => s && navObs.observe(s));
+
+  /* Reveal on scroll: content is visible by default; only elements below the fold start hidden */
+  const rvObs = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.remove('pre'); rvObs.unobserve(e.target); } }), { threshold: 0.12 });
+  $$('.rv').forEach(el => { if (el.getBoundingClientRect().top > innerHeight) { el.classList.add('pre'); rvObs.observe(el); } });
+
+  /* Hero HUD: gentle illustrative loop (small dip, then top-up back to target) */
+  const heroCur = $('#heroCur'), heroStatus = $('#heroStatus'), heroBar = $('#heroBar');
+  if (!reduce) {
+    let t = 0; const cycle = () => {
+      t = (t + 1) % 60;
+      let p = 36;
+      if (t >= 40 && t < 46) p = 36 - (t - 39) * 0.15;
+      else if (t >= 46 && t < 52) p = 35.1 + (t - 45) * 0.15;
+      p = Math.min(36, p);
+      heroCur.textContent = p.toFixed(1) + ' PSI';
+      const topping = t >= 46 && t < 52;
+      heroStatus.innerHTML = '<i></i>' + (topping ? 'TOPPING UP' : t >= 40 && t < 46 ? 'BELOW TARGET' : 'PRESSURE MAINTAINED');
+      heroBar.style.width = (p / 36 * 100) + '%';
+    };
+    setInterval(cycle, 400);
+  }
+
+  /* How it works: scroll-linked highlights */
+  const cut = $('#cut'), cutCap = $('#cutCap');
+  const stepObs = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    const s = e.target.dataset.step; cut.dataset.step = s; cutCap.textContent = `STEP ${s} OF 5`;
+    $$('.hstep').forEach(h => h.classList.toggle('on', h === e.target));
+  }), { rootMargin: '-45% 0px -45% 0px' });
+  $$('.hstep').forEach(h => stepObs.observe(h));
+
+  /* Interactive gauge */
+  const CX = 200, CY = 200, R = 150, MIN = 0, MAX = 50, A0 = 135, SWEEP = 270;
+  const ang = v => (A0 + (v - MIN) / (MAX - MIN) * SWEEP) * Math.PI / 180;
+  const pt = (v, r = R) => [CX + r * Math.cos(ang(v)), CY + r * Math.sin(ang(v))];
+  const arcPath = (v0, v1) => { const [x0, y0] = pt(v0), [x1, y1] = pt(v1); const large = (v1 - v0) / (MAX - MIN) * SWEEP > 180 ? 1 : 0; return `M${x0.toFixed(2)} ${y0.toFixed(2)} A ${R} ${R} 0 ${large} 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`; };
+  $('#gTrack').setAttribute('d', arcPath(MIN, MAX));
+  let ticks = '';
+  for (let v = 0; v <= 50; v++) {
+    const major = v % 10 === 0, mid = v % 5 === 0;
+    const [x0, y0] = pt(v, R + 18), [x1, y1] = pt(v, R + (major ? 32 : mid ? 27 : 23));
+    ticks += `<line x1="${x0.toFixed(1)}" y1="${y0.toFixed(1)}" x2="${x1.toFixed(1)}" y2="${y1.toFixed(1)}" stroke="${major ? '#8B95A5' : '#3A424E'}" stroke-width="${major ? 2 : 1.2}"/>`;
+    if (major) { const [lx, ly] = pt(v, R - 30); ticks += `<text x="${lx.toFixed(1)}" y="${(ly + 4).toFixed(1)}" text-anchor="middle" font-family="Michroma, Arial, sans-serif" font-size="11" fill="#6C7685">${v}</text>`; }
+  }
+  $('#gTicks').innerHTML = ticks;
+  const gArc = $('#gArc'), gVal = $('#gVal'), gTgt = $('#gTgt'), gTarget = $('#gTarget');
+  const status = $('#status'), statusText = $('#statusText'), pumpViz = $('#pumpViz'), pumpText = $('#pumpText');
+  const startP = $('#startP'), targetP = $('#targetP'), activate = $('#activate'), resetBtn = $('#reset');
+  let cur = +startP.value, running = false, raf = 0;
+
+  function setRangeFill(el) { el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); }
+  function setTimeline(i) { $$('.tl').forEach((t, k) => t.classList.toggle('on', k <= i)); }
+  function draw() {
+    const v = Math.max(MIN + 0.01, cur);
+    gArc.setAttribute('d', arcPath(MIN, v));
+    gVal.textContent = cur.toFixed(1);
+    const tg = +targetP.value; gTgt.textContent = tg;
+    const [tx, ty] = pt(tg, R + 0); const a = (A0 + (tg - MIN) / (MAX - MIN) * SWEEP);
+    gTarget.setAttribute('transform', `translate(${tx.toFixed(1)} ${ty.toFixed(1)}) rotate(${a})`);
+  }
+  function setStatus(kind, text) { status.className = 'status' + (kind ? ' ' + kind : ''); statusText.textContent = text; }
+  function idleState() {
+    const tg = +targetP.value;
+    if (cur < tg) { setStatus('', `Monitoring · ${(tg - cur).toFixed(1)} PSI below target`); setTimeline(1); }
+    else { setStatus('', 'Monitoring · at or above target'); setTimeline(0); }
+  }
+  function syncInputs() {
+    $('#startOut').innerHTML = startP.value + '<small>PSI</small>';
+    $('#targetOut').innerHTML = targetP.value + '<small>PSI</small>';
+    setRangeFill(startP); setRangeFill(targetP);
+  }
+  startP.addEventListener('input', () => { if (running) return; cur = +startP.value; syncInputs(); draw(); idleState(); pumpText.textContent = 'Pump idle. Press Activate to start the simulated system.'; });
+  targetP.addEventListener('input', () => { if (running) return; syncInputs(); draw(); idleState(); });
+
+  activate.addEventListener('click', () => {
+    if (running) return;
+    const tg = +targetP.value;
+    if (cur >= tg) {
+      setStatus('done', 'Already at target · no inflation needed'); setTimeline(3);
+      pumpText.textContent = 'Pressure is at or above the target, so the pump stays off. The concept adds air only.';
+      return;
+    }
+    running = true; activate.disabled = true; startP.disabled = true; targetP.disabled = true;
+    setStatus('inflating', 'Pressure below target'); setTimeline(1);
+    pumpText.textContent = 'Sensor reports low pressure. Controller is starting the pump.';
+    const begin = performance.now() + (reduce ? 0 : 700), from = cur, dist = tg - from, dur = reduce ? 1 : Math.max(1600, dist * 330);
+    const step = now => {
+      if (now < begin) { raf = requestAnimationFrame(step); return; }
+      if (!pumpViz.classList.contains('active')) { pumpViz.classList.add('active'); setStatus('inflating', 'Inflating · AutoAir active'); setTimeline(2); pumpText.textContent = 'Pump running. Air is flowing into the tire through the one-way valve.'; }
+      const k = Math.min(1, (now - begin) / dur), e = 1 - Math.pow(1 - k, 2.2);
+      cur = from + dist * e; draw();
+      if (k < 1) raf = requestAnimationFrame(step);
+      else {
+        cur = tg; draw(); running = false; pumpViz.classList.remove('active');
+        setStatus('done', 'Target Pressure Reached'); setTimeline(3);
+        pumpText.textContent = `Target of ${tg} PSI reached. The pump has stopped and the system is back to monitoring.`;
+        activate.disabled = false; startP.disabled = false; targetP.disabled = false;
+      }
+    };
+    raf = requestAnimationFrame(step);
+  });
+  resetBtn.addEventListener('click', () => {
+    cancelAnimationFrame(raf); running = false; pumpViz.classList.remove('active');
+    activate.disabled = false; startP.disabled = false; targetP.disabled = false;
+    startP.value = 28; targetP.value = 36; cur = 28; syncInputs(); draw(); idleState();
+    pumpText.textContent = 'Pump idle. Press Activate to start the simulated system.';
+  });
+  syncInputs(); draw(); idleState();
+
+  /* Waitlist modal */
+  const modal = $('#modal'), form = $('#waitForm'), nameI = $('#wlName'), emailI = $('#wlEmail');
+  let lastFocus = null;
+  function openModal() {
+    lastFocus = document.activeElement; $('#wlForm').hidden = false; $('#wlDone').hidden = true;
+    modal.classList.add('open'); modal.setAttribute('aria-hidden', 'false'); setTimeout(() => nameI.focus(), 60);
+  }
+  function closeModal() { modal.classList.remove('open'); modal.setAttribute('aria-hidden', 'true'); if (lastFocus) lastFocus.focus(); }
+  $$('[data-waitlist]').forEach(b => b.addEventListener('click', () => { nav.classList.remove('open'); openModal(); }));
+  $('#closeModal').addEventListener('click', closeModal); $('#doneClose').addEventListener('click', closeModal);
+  modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+  document.addEventListener('keydown', e => {
+    if (!modal.classList.contains('open')) return;
+    if (e.key === 'Escape') closeModal();
+    if (e.key === 'Tab') {
+      const f = [...modal.querySelectorAll('button, input')].filter(x => !x.closest('[hidden]') && !x.disabled);
+      const first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+  const fieldErr = (input, el, msg) => { el.textContent = msg; input.setAttribute('aria-invalid', msg ? 'true' : 'false'); };
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    const n = nameI.value.trim(), m = emailI.value.trim();
+    let ok = true;
+    if (n.length < 2) { fieldErr(nameI, $('#nameErr'), 'Enter your name (at least 2 characters).'); ok = false; } else fieldErr(nameI, $('#nameErr'), '');
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(m)) { fieldErr(emailI, $('#emailErr'), 'Enter a valid email address, like name@example.com.'); ok = false; } else fieldErr(emailI, $('#emailErr'), '');
+    if (!ok) { (n.length < 2 ? nameI : emailI).focus(); return; }
+    $('#doneTitle').textContent = `Thanks, ${n.split(' ')[0]}.`;
+    $('#doneText').textContent = `Your details are valid and your spot is confirmed in this preview. This site is not yet connected to a signup service, so nothing was sent or stored for ${m}.`;
+    $('#wlForm').hidden = true; $('#wlDone').hidden = false; form.reset(); $('#doneClose').focus();
+  });
+  [nameI, emailI].forEach(i => i.addEventListener('input', () => { if (i.getAttribute('aria-invalid') === 'true') fieldErr(i, i === nameI ? $('#nameErr') : $('#emailErr'), ''); }));
+})();
+</script>
+
+</html>
